@@ -124,13 +124,13 @@
       if(!el) return;
       var t = (el.textContent || "");
       if(t.indexOf("上下") >= 0 || t.indexOf("シャッフル") >= 0 || t.indexOf("めくって") >= 0 || t.indexOf("またあした") >= 0){
-        el.textContent = s.drawn ? "今日のカードは引き済み" : "タップで今日のカードを引く";
+        el.textContent = s.drawn ? "🐻 きょうは もう みつけたよ。" : "タップで今日のカードを引く";
       }
     });
 
     var cap = document.getElementById("cardCaption");
     if(cap && !s.drawn) cap.textContent = "タップで今日のカードを引く";
-    if(cap && s.drawn && (cap.textContent || "").indexOf("上下") >= 0) cap.textContent = "今日のカードは引き済み";
+    if(cap && s.drawn && (cap.textContent || "").indexOf("上下") >= 0) cap.textContent = "🐻 きょうは もう みつけたよ。";
   }
 
   function drawToday(){

@@ -1,5 +1,5 @@
 /* 106_card_physics_touch.js
-   Card Physics Touch v9 binder-open rescue + vertical shuffle fix
+   Card Physics Touch v13 swipe-draw confirm
    - 4場面を同じ3D物理で処理
    - startでは止めない。動いた時だけ古い処理を止める
    - バインダー詳細のダブルタップ全画面を106側で復活
@@ -24,12 +24,14 @@
   var st = {
     active:false,
     moved:false,
+    vertical:false,
     sx:0, sy:0, dx:0, dy:0,
     surface:null,
     suppressClickUntil:0,
     lastTouchTime:0,
     replayLastTap:0,
-    replayTapTimer:null
+    replayTapTimer:null,
+    verticalLocked:false
   };
 
   function $(id){ return document.getElementById(id); }
@@ -127,6 +129,8 @@
       ".ce-physics-pop-left{animation:cePhysicsPopLeft .36s cubic-bezier(.18,.88,.2,1) both!important;}",
       ".ce-physics-pop-right{animation:cePhysicsPopRight .36s cubic-bezier(.18,.88,.2,1) both!important;}",
       "@keyframes cePhysicsPopLeft{0%{transform:perspective(950px) rotateY(76deg) translateX(18px) scale(.985)}58%{transform:perspective(950px) rotateY(-8deg) translateX(-4px) scale(1.018)}100%{transform:perspective(950px) rotateY(0) translateX(0) scale(1)}}",
+      ".ce-draw-locked-nudge{animation:ceDrawLockedNudge .24s ease-out both!important;}",
+      "@keyframes ceDrawLockedNudge{0%{transform:translateY(0)}36%{transform:translateY(-7px)}72%{transform:translateY(4px)}100%{transform:translateY(0)}}",
       "@keyframes cePhysicsPopRight{0%{transform:perspective(950px) rotateY(-76deg) translateX(-18px) scale(.985)}58%{transform:perspective(950px) rotateY(8deg) translateX(4px) scale(1.018)}100%{transform:perspective(950px) rotateY(0) translateX(0) scale(1)}}"
     ].join("");
     var stEl = document.createElement("style");
@@ -209,6 +213,14 @@
       return true;
     }
     if(s.kind === "main"){
+      // v13: 未確定の裏面カードは、左右スワイプで裏返した時点で「今日の1枚」として確定する。
+      // ここで単に cardFlipped だけ変えると、見た目は表になるのに daily.drawn が立たず、
+      // 上下シャッフルが止まらない。抽選・保存・バインダー登録は105の drawToday() に任せる。
+      if(!isDailyDrawn() && getFlipped()){
+        drawTodayFromPhysics();
+        setTimeout(function(){ pop(dir, {el:$("flipCard"), kind:"main"}); }, 520);
+        return true;
+      }
       setFlipped(!getFlipped());
       callRender("flash");
       setTimeout(function(){ pop(dir, {el:$("flipCard"), kind:"main"}); }, 30);
@@ -227,29 +239,94 @@
   }
 
   function shouldFlip(dx, dy){ return Math.abs(dx) >= CFG.flipThreshold && Math.abs(dx) > Math.abs(dy) * 1.18; }
+  function isDailyDrawn(){
+    try{
+      if(window.MEGANE_CARD_ENGINE && typeof window.MEGANE_CARD_ENGINE.loadDaily === "function"){
+        var s = window.MEGANE_CARD_ENGINE.loadDaily();
+        return !!(s && s.drawn);
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function drawTodayFromPhysics(){
+    try{
+      if(window.MEGANE_CARD_ENGINE && typeof window.MEGANE_CARD_ENGINE.drawToday === "function"){
+        window.MEGANE_CARD_ENGINE.drawToday();
+        return true;
+      }
+    }catch(e){}
+    try{
+      if(typeof window.meganeDrawTodayCard === "function"){
+        window.meganeDrawTodayCard();
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+
+  function showDrawLockedHint(){
+    try{
+      var cap = $("cardCaption");
+      if(cap) cap.textContent = "🐻 きょうは もう みつけたよ。";
+    }catch(e){}
+    try{
+      var el = $("flipCard");
+      if(!el) return;
+      cleanForVerticalDeal(el);
+      el.classList.remove("ce-draw-locked-nudge");
+      void el.offsetWidth;
+      el.classList.add("ce-draw-locked-nudge");
+      setTimeout(function(){ try{ el.classList.remove("ce-draw-locked-nudge"); }catch(_){} }, 260);
+    }catch(e){}
+  }
   function shouldVerticalShuffle(surface, dx, dy){
-    return surface && surface.kind === "main" && !surface.fullscreen && Math.abs(dy) >= 38 && Math.abs(dy) > Math.abs(dx) * 1.02;
+    return surface && surface.kind === "main" && !surface.fullscreen && !isDailyDrawn() && Math.abs(dy) >= 26 && Math.abs(dy) > Math.abs(dx) * 0.82;
+  }
+  function cleanForVerticalDeal(el){
+    if(!el) return;
+    el.classList.remove(
+      "ce-physics-active","ce-physics-peek","ce-physics-snap",
+      "ce-physics-pop-left","ce-physics-pop-right",
+      "ce-touching-v6","ce-return-v6","ce-flip-right-v6","ce-flip-left-v6"
+    );
+    el.style.transform = "";
+    el.style.opacity = "";
+    el.style.transformOrigin = "";
+    el.style.removeProperty("--ce-phys-shadow-x");
+    el.style.removeProperty("--ce-phys-shadow-y");
+    el.style.removeProperty("--ce-phys-shadow-blur");
   }
   function doVerticalShuffle(dy){
     var step = dy < 0 ? 1 : -1;
     var el = $("flipCard");
-    if(el){
-      // reset() の transition が flyDeck の keyframes を食うことがあるので、
-      // 縦シャッフルでは物理クラスだけ外してから既存エンジンへ渡す。
-      el.classList.remove("ce-physics-active","ce-physics-peek","ce-physics-snap");
-      el.style.transform = "";
-      el.style.opacity = "";
-      el.style.transformOrigin = "";
-    }
-    try{
-      if(typeof moveCard === "function"){ moveCard(step); return true; }
-    }catch(e){}
-    try{
-      if(window.moveCard && typeof window.moveCard === "function"){ window.moveCard(step); return true; }
-    }catch(e){}
+    cleanForVerticalDeal(el);
+
+    // v11: 上下スワイプは「配る演出だけ」に戻す。
+    // moveCard() を呼ぶと 00_core 側の旧カード送りが走り、
+    // 今日の1枚ロック・バインダー登録をすり抜けて何回でも引ける状態になる。
+    // 抽選・保存・バインダー登録は105の drawToday() だけに任せる。
     try{
       if(window.MEGANE_CARD_ENGINE && typeof window.MEGANE_CARD_ENGINE.flyDeck === "function"){
         window.MEGANE_CARD_ENGINE.flyDeck(step);
+        return true;
+      }
+    }catch(e){}
+
+    // 保険：105が無い環境でも最低限、見た目だけ飛ばす。
+    try{
+      if(el){
+        el.classList.remove("ce-fly-up","ce-fly-down","ce-return-deck");
+        void el.offsetWidth;
+        el.classList.add(step > 0 ? "ce-fly-up" : "ce-fly-down");
+        setTimeout(function(){
+          try{
+            el.classList.remove("ce-fly-up","ce-fly-down");
+            void el.offsetWidth;
+            el.classList.add("ce-return-deck");
+            setTimeout(function(){ try{ el.classList.remove("ce-return-deck"); }catch(_){} }, 320);
+          }catch(_){}
+        }, 560);
         return true;
       }
     }catch(e){}
@@ -264,7 +341,7 @@
     if(!s) return;
     if(e.type.indexOf("pointer") === 0 && Date.now() - st.lastTouchTime < 520) return;
     if(e.type.indexOf("touch") === 0) st.lastTouchTime = Date.now();
-    st.active = true; st.moved = false;
+    st.active = true; st.moved = false; st.vertical = false; st.verticalLocked = false;
     st.sx = p.clientX; st.sy = p.clientY;
     st.dx = 0; st.dy = 0; st.surface = s;
     if(s.kind === "binderReplay"){
@@ -275,6 +352,10 @@
     // ここでは止めない。止めるとダブルタップ/通常タップが死ぬ。
   }
 
+  function isVerticalIntent(surface, dx, dy){
+    return surface && surface.kind === "main" && !surface.fullscreen && Math.abs(dy) >= 22 && Math.abs(dy) > Math.abs(dx) * 1.12;
+  }
+
   function move(e){
     if(!st.active) return;
     var p = pointFromEvent(e);
@@ -282,6 +363,22 @@
     var dist = Math.max(Math.abs(st.dx), Math.abs(st.dy));
     if(dist < CFG.activeDistance) return;
     st.moved = true;
+
+    // v10: 通常カードの上下スワイプは3Dめくりに食わせない。
+    // ここではカード画像を動かさず、endで既存の「配る」演出へ橋渡しする。
+    if(isVerticalIntent(st.surface, st.dx, st.dy)){
+      if(isDailyDrawn()){
+        st.verticalLocked = true;
+        reset(st.surface);
+        stop(e, true);
+        return;
+      }
+      st.vertical = true;
+      reset(st.surface);
+      stop(e, true);
+      return;
+    }
+
     apply(st.dx, st.dy);
     stop(e, true);
   }
@@ -302,7 +399,7 @@
         document.body.classList.remove("ce-card-gesture-active");
         var panel = $("binderReplayTextPanel"); if(panel) panel.classList.remove("expanded");
       }
-      st.surface = null;
+      st.surface = null; st.vertical = false; st.verticalLocked = false;
       return;
     }
 
@@ -311,10 +408,17 @@
       document.body.classList.remove("ce-card-gesture-active");
       var panel = $("binderReplayTextPanel"); if(panel) panel.classList.remove("expanded");
     }
-    if(shouldVerticalShuffle(surface, dx, dy)){
+    if(st.verticalLocked){
+      showDrawLockedHint();
+      st.suppressClickUntil = Date.now() + 220;
+      st.surface = null; st.vertical = false; st.verticalLocked = false; st.verticalLocked = false;
+      stop(e, true);
+      return false;
+    }
+    if(st.vertical || shouldVerticalShuffle(surface, dx, dy)){
       doVerticalShuffle(dy);
       st.suppressClickUntil = Date.now() + 260;
-      st.surface = null;
+      st.surface = null; st.vertical = false; st.verticalLocked = false;
       stop(e, true);
       return false;
     }
@@ -322,7 +426,7 @@
       var dir = dx >= 0 ? 1 : -1;
       doFlip(dir);
       st.suppressClickUntil = Date.now() + 420;
-      st.surface = null;
+      st.surface = null; st.vertical = false; st.verticalLocked = false;
       stop(e, true);
       return false;
     }
@@ -331,12 +435,12 @@
       document.body.classList.remove("ce-card-gesture-active");
       var panel = $("binderReplayTextPanel"); if(panel) panel.classList.remove("expanded");
     }
-    st.surface = null;
+    st.surface = null; st.vertical = false; st.verticalLocked = false;
     stop(e, true);
     return false;
   }
 
-  function cancel(){ if(!st.active) return; var s = st.surface; st.active = false; if(s && s.kind === "binderReplay"){ document.body.classList.remove("ce-card-gesture-active"); var panel=$("binderReplayTextPanel"); if(panel) panel.classList.remove("expanded"); } st.surface = null; reset(s); }
+  function cancel(){ if(!st.active) return; var s = st.surface; st.active = false; st.vertical = false; st.verticalLocked = false; if(s && s.kind === "binderReplay"){ document.body.classList.remove("ce-card-gesture-active"); var panel=$("binderReplayTextPanel"); if(panel) panel.classList.remove("expanded"); } st.surface = null; reset(s); }
 
   function replaySingleTap(){
     var card = $("binderReplayFlipCard");
@@ -495,5 +599,5 @@
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
 
-  window.MEGANE_CARD_PHYSICS_TOUCH = { version:"v9_binder_open_vertical_fix", reset:reset, config:CFG };
+  window.MEGANE_CARD_PHYSICS_TOUCH = { version:"v13_swipe_draw_confirm", reset:reset, config:CFG };
 })();
