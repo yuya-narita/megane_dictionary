@@ -1,10 +1,24 @@
 <!doctype html>
 <html lang="ja">
 <head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-9ZCSD3CXH3"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9ZCSD3CXH3');
+  </script>
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>メガネ辞書 MVP clean</title>
   <link rel="stylesheet" href="./style.css?v=146" />
+
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png?v=observer1">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png?v=observer1">
+  <link rel="manifest" href="./manifest.json?v=observer1">
+
 </head>
 <body class="mode-dictionary">
   <main id="app" class="app">
@@ -253,8 +267,8 @@ padding:20px;">
   <script src="./js/00_core.js?v=140"></script>
   <script src="./js/10_manga_reader.js?v=conf1"></script>
   <script src="./js/voice-map.js?v=audio1"></script>
-  <script src="./js/20_dictionary_audio.js?v=audio1"></script>
-  <script src="./js/30_features_and_hotfixes.js?v=cards4"></script>
+  <script src="./js/20_dictionary_audio.js?v=selfglass16audio"></script>
+  <script src="./js/30_features_and_hotfixes.js?v=favsingle19"></script>
   <script src="./js/25_conference_player_solid.js?v=solid1"></script>
   <script src="./js/26_conference_resume.js?v=resume1"></script>
   <script src="./js/28_conference_features.js?v=features1"></script>
@@ -281,25 +295,20 @@ padding:20px;">
   <script src="./js/57_user_definition_plus.js?v=plus1"></script>
   <script src="./js/58_stop_button_real_fix.js?v=stopreal1"></script>
   <script src="./js/59_plus_word_stop_resume.js?v=v79"></script>
-  <script src="./js/60_userdef_single_edit_confirm.js?v=?v=82"></script>
+  <script src="./js/60_userdef_single_edit_confirm.js?v=delivery5"></script>
+<script src="./js/61_self_glass_cards.js?v=favsingle19"></script>
+<script src="./js/62_self_card_image_share.js?v=sharebtn1"></script>
+<script src="./js/65_character_definition_share_button.js?v=10"></script>
+<script src="./js/66_userdef_share_hint_text.js?v=1"></script>
 
 <script src="./js/cleanup_ui_only.js"></script>
 <script src="./js/step2_card_only_fix.js"></script>
 <script src="./js/step2_card_pinpoint_fix.js"></script>
-<script src="./js/99_nav_real_fix.js?v=navv10"></script>
+<script src="./js/99_nav_real_fix.js?v=favsingle2"></script>
 <script src="./js/99_binder_panel_no_swipe_close.js?v=noswipeclose1"></script>
 <script src="./js/66_music_v7_bottom_fav_nav_fix.js?v=bottomfav2"></script>
-<script src="./js/67_session_bugfix_20260611.js?v=20260611a"></script>
-<script src="./js/68_session_bugfix_20260611_b.js?v=20260611b"></script>
 <script src="./js/69_music_album_grid_touch_fix.js?v=20260611c"></script>
 <script src="./js/70_music_favorites_row_final_fix.js?v=20260611d"></script>
-<script src="./js/71_session_bugfix_20260611_h.js?v=20260611h"></script>
-<script src="./js/72_session_bugfix_20260611_i.js?v=20260611i"></script>
-<script src="./js/73_session_bugfix_20260611_j.js?v=20260611j"></script>
-<script src="./js/74_session_bugfix_20260611_k.js?v=20260611l"></script>
-<script src="./js/75_favorite_close_tap_leak_fix.js?v=20260611p"></script>
-<script src="./js/76_favorite_close_hard_shield.js?v=20260611q"></script>
-<script src="./js/77_favorite_hint_hide.js?v=20260611r"></script>
 
 
 <script src="js/101_mode_cleanup_hotfix.js"></script>
@@ -313,7 +322,12 @@ padding:20px;">
 <script src="js/83_developer_patch.js?v=3"></script>
 <script src="js/84_observation_hooks_patch.js"></script>
 <script src="js/85_music_unlock_event_patch.js"></script>
+
+<script src="js/86_nyx_live_log.js?v=1"></script>
+
 <script src="js/105_card_engine.js?v=randomtoggle1"></script>
-<script src="js/106_card_physics_touch.js?v=unified14"></script>
+<script src="js/106_card_physics_touch.js?v=unified16"></script>
+<script src="./js/80_favorites_singleton.js?v=20"></script>
+<script src="./js/81_favorites_visual_stabilizer.js?v=5"></script>
 </body>
 </html>
