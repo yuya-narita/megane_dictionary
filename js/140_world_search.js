@@ -1,4 +1,4 @@
-/* 140_world_search.js v8 music-layout-fix
+/* 140_world_search.js v7 imgfix
  * メガネ辞書 → 外の世界へ
  *
  * - SVGアイコン（./icons/*.svg）
@@ -12,7 +12,7 @@
   "use strict";
 
   const BUTTON_ID = "worldSearchButton";
-  const STYLE_ID = "worldSearchStyleV8";
+  const STYLE_ID = "worldSearchStyleV7";
   const ANIMATION_MS = 260;
 
   let lastOpenAt = 0;
@@ -298,30 +298,16 @@
 
   // ＋を実際のカード右下へ追従させる。
   // right / bottom を他パッチが書き戻しても、left / top を優先する。
-  function clearUserDefinitionPlusPosition(plus) {
-    if (!plus) return;
-
-    // World Searchが辞書モードで付けたインライン位置だけを解除する。
-    // 音楽・会議・カード側のCSS／JSへ配置権を返す。
-    ["position", "left", "top", "right", "bottom", "transform"].forEach(property => {
-      plus.style.removeProperty(property);
-    });
-  }
-
   function positionUserDefinitionPlus() {
     const plus = document.getElementById("userDefinitionPlus");
-    if (!plus) return;
-
-    const isDictionary =
-      document.body.classList.contains("mode-dictionary");
-
-    if (!isDictionary) {
-      clearUserDefinitionPlusPosition(plus);
-      return;
-    }
-
     const rect = getCardRect();
-    if (!rect || plus.hidden) return;
+
+    if (
+      !plus ||
+      !rect ||
+      plus.hidden ||
+      !document.body.classList.contains("mode-dictionary")
+    ) return;
 
     const compact = window.matchMedia("(max-width: 420px)").matches;
     const insetX = compact ? 10 : 14;
