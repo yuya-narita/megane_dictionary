@@ -1,4 +1,4 @@
-/* 140_world_search.js v4
+/* 140_world_search.js v5
  * メガネ辞書 → 外の世界へ
  * 検索ボタンをカードDOMの外側へ置き、カード音声タップと完全分離する。
  */
@@ -6,7 +6,7 @@
   "use strict";
 
   const BUTTON_ID = "worldSearchButton";
-  const STYLE_ID = "worldSearchStyleV4";
+  const STYLE_ID = "worldSearchStyleV5";
   let lastOpenAt = 0;
   let rafId = 0;
 
@@ -81,11 +81,15 @@
     return bodyModeIsDictionary && !selfActive;
   }
 
+  function getCardRect() {
+    const card = document.getElementById("card") || document.querySelector(".card");
+    return card ? card.getBoundingClientRect() : null;
+  }
+
   function positionButton() {
     const button = document.getElementById(BUTTON_ID);
-    const card = document.getElementById("card") || document.querySelector(".card");
-    if (!button || !card || button.hidden) return;
-    const rect = card.getBoundingClientRect();
+    const rect = getCardRect();
+    if (!button || !rect || button.hidden) return;
     const compact = window.matchMedia("(max-width: 420px)").matches;
     const size = compact ? 43 : 46;
     const insetX = compact ? 12 : 16;
@@ -94,9 +98,35 @@
     button.style.top = `${Math.round(rect.bottom - insetY - size)}px`;
   }
 
+  // ＋を画面基準ではなく、実際のカード右下へ追従させる。
+  // DOM上はカード外のままなので、カード音声・スワイプとは干渉しない。
+  function positionUserDefinitionPlus() {
+    const plus = document.getElementById("userDefinitionPlus");
+    const rect = getCardRect();
+    if (!plus || !rect || plus.hidden || !document.body.classList.contains("mode-dictionary")) return;
+
+    const compact = window.matchMedia("(max-width: 420px)").matches;
+    const insetX = compact ? 10 : 14;
+    const insetY = compact ? 9 : 12;
+    const plusRect = plus.getBoundingClientRect();
+    const width = plusRect.width || 48;
+    const height = plusRect.height || 48;
+
+    plus.style.position = "fixed";
+    plus.style.left = `${Math.round(rect.right - insetX - width)}px`;
+    plus.style.top = `${Math.round(rect.bottom - insetY - height)}px`;
+    // 既存パッチがright/bottomを何度書き戻しても、left/top基準で位置を固定する。
+    plus.style.transform = "none";
+  }
+
+  function positionAll() {
+    positionButton();
+    positionUserDefinitionPlus();
+  }
+
   function schedulePosition() {
     cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(positionButton);
+    rafId = requestAnimationFrame(positionAll);
   }
 
   function updateButton() {
@@ -172,7 +202,7 @@
     ["resize", "orientationchange", "scroll", "pageshow", "focus"].forEach(type => {
       window.addEventListener(type, () => { updateButton(); schedulePosition(); }, { passive: true });
     });
-    setInterval(updateButton, 500);
+    setInterval(() => { updateButton(); schedulePosition(); }, 350);
   }
 
   function initWorldSearch() {
