@@ -5491,6 +5491,16 @@ ${line(c.lookbear || c.lookBear)}
     showGuideOnce();
   };
 
+  // Developer用：ホーム画面起動中でも強制表示できるテスト関数。
+  window.testMeganeHomeGuideV87 = function () {
+    storageRemove(GUIDE_SHOWN_KEY);
+    waitForNoticeSpace(function () {
+      showModal(GUIDE_CONFIG, function () {
+        storageSet(GUIDE_SHOWN_KEY, "1");
+      });
+    });
+  };
+
   window.showMeganeHomeWelcomeV87 = function () {
     storageRemove(WELCOME_SHOWN_KEY);
     waitForNoticeSpace(function () {
@@ -5499,6 +5509,8 @@ ${line(c.lookbear || c.lookBear)}
       });
     });
   };
+
+  window.testMeganeHomeWelcomeV87 = window.showMeganeHomeWelcomeV87;
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);
