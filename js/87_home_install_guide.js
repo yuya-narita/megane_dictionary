@@ -18,6 +18,7 @@
 
   if (window.__MEGANE_HOME_INSTALL_GUIDE_87__) return;
   window.__MEGANE_HOME_INSTALL_GUIDE_87__ = true;
+  window.MEGANE_HOME_GUIDE_VERSION = "87d-event-hook";
 
   const FAVORITES_KEY = "meganeFavoritesV65";
   const GUIDE_SHOWN_KEY = "meganeHomeGuideShownV87c";
@@ -264,6 +265,12 @@
   }
 
   function boot() {
+    // お気に入り保存完了地点から発行されるイベントを受け取る。
+    window.addEventListener("megane:dict-favorite-added", function () {
+      if (isStandalone()) return;
+      setTimeout(function () { showGuideOnce(false); }, 180);
+    });
+
     // ホーム画面からの初回起動時だけ歓迎。
     if (isStandalone()) setTimeout(function(){ showWelcomeOnce(false); }, 900);
   }

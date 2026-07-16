@@ -228,6 +228,22 @@
     }
     save(list);
 
+    // 辞書のお気に入りが「未登録→登録」になった事実を通知する。
+    // iOS Safariのイベント発火順やlocalStorage監視には依存しない。
+    if(!wasOn && item.type === "dict") {
+      try {
+        window.dispatchEvent(new CustomEvent("megane:dict-favorite-added", {
+          detail: { key:item.key, word:item.word, glassId:item.glassId || "" }
+        }));
+      } catch(_) {
+        try {
+          var ev=document.createEvent("Event");
+          ev.initEvent("megane:dict-favorite-added", true, true);
+          window.dispatchEvent(ev);
+        } catch(__) {}
+      }
+    }
+
     // モーダルが開いている時だけ再描画。普段は星だけ更新してチラつきを避ける。
     const d=q("favoriteDialog");
     if(d && d.open) renderList();
@@ -479,12 +495,7 @@
     busyStarUntil = Date.now() + 120;
     swallowStarUntil = Date.now() + 520;
 
-    // 登録前の状態を保持し、未登録→登録になった時だけホーム追加案内へ通知する。
-    const wasOn = isOn(item);
     toggleCurrent();
-    if(!wasOn && typeof window.maybeShowHomeGuideV87 === "function"){
-      setTimeout(function(){ window.maybeShowHomeGuideV87(); }, 180);
-    }
     return false;
   }
 
