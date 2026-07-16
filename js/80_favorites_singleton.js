@@ -478,7 +478,13 @@
     if(Date.now() < swallowStarUntil) return false;
     busyStarUntil = Date.now() + 120;
     swallowStarUntil = Date.now() + 520;
+
+    // 登録前の状態を保持し、未登録→登録になった時だけホーム追加案内へ通知する。
+    const wasOn = isOn(item);
     toggleCurrent();
+    if(!wasOn && typeof window.maybeShowHomeGuideV87 === "function"){
+      setTimeout(function(){ window.maybeShowHomeGuideV87(); }, 180);
+    }
     return false;
   }
 
