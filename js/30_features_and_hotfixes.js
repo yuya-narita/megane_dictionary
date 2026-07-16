@@ -5176,8 +5176,8 @@ ${line(c.lookbear || c.lookBear)}
   window.__MEGANE_HOME_INSTALL_GUIDE_87__ = true;
 
   const FAVORITES_KEY = "meganeFavoritesV65";
-  const GUIDE_SHOWN_KEY = "meganeHomeGuideShownV87";
-  const WELCOME_SHOWN_KEY = "meganeHomeWelcomeShownV87";
+  const GUIDE_SHOWN_KEY = "meganeHomeGuideShownV87b";
+  const WELCOME_SHOWN_KEY = "meganeHomeWelcomeShownV87b";
 
   const GUIDE_AUDIO = "audio/notice/nyx_home_install_01.mp3";
   const WELCOME_AUDIO = "audio/notice/quelina_home_welcome_01.mp3";
@@ -5387,15 +5387,16 @@ ${line(c.lookbear || c.lookBear)}
     }, 220);
   }
 
-  function waitForNoticeSpace(callback, attempts) {
-    const remaining = typeof attempts === "number" ? attempts : 80;
+  function waitForNoticeSpace(callback) {
     if (!existingNoticeIsOpen()) {
       callback();
       return;
     }
-    if (remaining <= 0) return;
+
+    // 初回通知をユーザーが読む時間に上限を設けない。
+    // 閉じられるまで待ち、未表示のまま「表示済み」にはしない。
     setTimeout(function () {
-      waitForNoticeSpace(callback, remaining - 1);
+      waitForNoticeSpace(callback);
     }, 250);
   }
 
@@ -5403,11 +5404,11 @@ ${line(c.lookbear || c.lookBear)}
     if (isStandalone()) return;
     if (storageGet(GUIDE_SHOWN_KEY) === "1") return;
 
-    // 表示決定時点で保存。連打や再描画による二重表示を防ぐ。
-    storageSet(GUIDE_SHOWN_KEY, "1");
-
     waitForNoticeSpace(function () {
-      showModal(GUIDE_CONFIG);
+      if (isStandalone() || storageGet(GUIDE_SHOWN_KEY) === "1") return;
+      showModal(GUIDE_CONFIG, function () {
+        storageSet(GUIDE_SHOWN_KEY, "1");
+      });
     });
   }
 
@@ -5415,10 +5416,11 @@ ${line(c.lookbear || c.lookBear)}
     if (!isStandalone()) return;
     if (storageGet(WELCOME_SHOWN_KEY) === "1") return;
 
-    storageSet(WELCOME_SHOWN_KEY, "1");
-
     waitForNoticeSpace(function () {
-      showModal(WELCOME_CONFIG);
+      if (!isStandalone() || storageGet(WELCOME_SHOWN_KEY) === "1") return;
+      showModal(WELCOME_CONFIG, function () {
+        storageSet(WELCOME_SHOWN_KEY, "1");
+      });
     });
   }
 
