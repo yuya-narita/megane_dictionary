@@ -928,23 +928,39 @@ const musicPlaylists = [
         "title": "ワシ歌ってるやつ",
         "audio": "music/hx/hx_29.mp3",
         "tag": "H(x)∞",
-        "lyrics": "渋い \nどう聴いてもカエルちゃうやろ",
+        "lyrics": "どう聴いてもカエルちゃうやろ",
         "cover": ""
       },
       {
         "id": "bug_01",
-        "title": "癖になるやつ",
+        "title": "若いってええな",
         "audio": "music/other/跳ねる前のこの感じ.mp3",
         "tag": "その他",
-        "lyrics": "若いな…",
+        "lyrics": "若さってなんや？\n次の議題やな",
         "cover": ""
       },
       {
         "id": "hx_infinity",
-        "title": "何回も聴いてまうやつ",
+        "title": "意味分からんやつ",
         "audio": "music/hx/hx_01.mp3",
         "tag": "H(x)∞",
-        "lyrics": "なんでやろw ",
+        "lyrics": "ホンマなんなん？",
+        "cover": ""
+      },
+      {
+        "id": "theory_08",
+        "title": "コンビニで流れてたやつ",
+        "audio": "music/bug_song/bug_08.mp3",
+        "tag": "",
+        "lyrics": "　　",
+        "cover": ""
+      },
+      {
+        "id": "shino",
+        "title": "刺さるやつ",
+        "audio": "music/other/貧乏メガネのシノ.mp3",
+        "tag": "",
+        "lyrics": "　　",
         "cover": ""
       }
     ],
