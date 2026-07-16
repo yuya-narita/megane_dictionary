@@ -16,7 +16,7 @@
   function modal(){ ensureStyle(); var m=document.getElementById("developerPatchModal"); if(m) return m; m=document.createElement("div"); m.id="developerPatchModal"; m.className="dev-modal"; m.hidden=true; document.body.appendChild(m); m.addEventListener("click",function(e){ if(e.target===m) m.hidden=true; }); return m; }
   function row(label,value){ return '<div class="dev-row"><span>'+esc(label)+'</span><em>'+esc(value)+'</em></div>'; }
   function storageSummary(){ var keys=[]; try{ for(var i=0;i<localStorage.length;i++) keys.push(localStorage.key(i)); }catch(e){} keys.sort(); return keys.map(function(k){ var v=""; try{ v=localStorage.getItem(k)||""; }catch(e){} return k+" = "+(v.length>80?v.slice(0,80)+"…":v); }).join("\n"); }
-  function storageRows(){ var count=0, chars=0; try{ count=localStorage.length; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||""; chars += k.length + v.length; } }catch(e){} var guide="未表示", welcome="未表示"; try{ guide=localStorage.getItem("meganeHomeGuideShownV87")==="1"?"表示済み":"未表示"; welcome=localStorage.getItem("meganeHomeWelcomeShownV87")==="1"?"表示済み":"未表示"; }catch(e){} return row("localStorage keys",count)+row("approx chars",chars)+row("Home案内",guide)+row("Home歓迎",welcome); }
+  function storageRows(){ var count=0, chars=0; try{ count=localStorage.length; for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i), v=localStorage.getItem(k)||""; chars += k.length + v.length; } }catch(e){} var guide="未表示", welcome="未表示"; try{ guide=localStorage.getItem("meganeHomeGuideShownV87b")==="1"?"表示済み":"未表示"; welcome=localStorage.getItem("meganeHomeWelcomeShownV87b")==="1"?"表示済み":"未表示"; }catch(e){} return row("localStorage keys",count)+row("approx chars",chars)+row("Home案内",guide)+row("Home歓迎",welcome); }
   function showTab(root,name){ root.querySelectorAll(".dev-section").forEach(function(s){ s.classList.remove("active"); }); var el=root.querySelector('[data-section="'+name+'"]'); if(el) el.classList.add("active"); }
   function openDeveloper(){
     localStorage.setItem("megane_developer_mode_v1","1");
@@ -61,12 +61,26 @@
           toast("82さんにテスト関数がありません");
         }
       }
-      if(a==="resetHomeGuide"){ if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87"); toast("Home案内 初期化"); }
-      if(a==="testHomeGuide"){ if(window.testMeganeHomeGuideV87) window.testMeganeHomeGuideV87(); else if(window.showMeganeHomeGuideV87) window.showMeganeHomeGuideV87(); else toast("v87テスト関数がありません"); }
-      if(a==="resetHomeWelcome"){ if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87"); toast("Home歓迎 初期化"); }
-      if(a==="testHomeWelcome"){ if(window.testMeganeHomeWelcomeV87) window.testMeganeHomeWelcomeV87(); else if(window.showMeganeHomeWelcomeV87) window.showMeganeHomeWelcomeV87(); else toast("v87テスト関数がありません"); }
-      if(a==="resetHomeBoth"){ if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87"); if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87"); toast("Home案内・歓迎 初期化"); }
-      if(a==="resetDev"){ localStorage.removeItem("megane_developer_mode_v1"); localStorage.removeItem("megane_dev_random_test"); if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87"); if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87"); var rb=document.getElementById("cardRandomTestButton"); if(rb) rb.style.display="none"; var rp=document.getElementById("cardRandomTestPanel"); if(rp) rp.style.display="none"; toast("Developer＋Home通知 初期化"); }
+      if(a==="resetHomeGuide"){ if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87b"); toast("Home案内 初期化"); }
+      if(a==="testHomeGuide"){
+        m.hidden=true;
+        setTimeout(function(){
+          if(window.testMeganeHomeGuideV87) window.testMeganeHomeGuideV87();
+          else if(window.showMeganeHomeGuideV87) window.showMeganeHomeGuideV87();
+          else toast("v87テスト関数がありません");
+        },120);
+      }
+      if(a==="resetHomeWelcome"){ if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87b"); toast("Home歓迎 初期化"); }
+      if(a==="testHomeWelcome"){
+        m.hidden=true;
+        setTimeout(function(){
+          if(window.testMeganeHomeWelcomeV87) window.testMeganeHomeWelcomeV87();
+          else if(window.showMeganeHomeWelcomeV87) window.showMeganeHomeWelcomeV87();
+          else toast("v87テスト関数がありません");
+        },120);
+      }
+      if(a==="resetHomeBoth"){ if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87b"); if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87b"); toast("Home案内・歓迎 初期化"); }
+      if(a==="resetDev"){ localStorage.removeItem("megane_developer_mode_v1"); localStorage.removeItem("megane_dev_random_test"); if(window.resetMeganeHomeGuideV87) window.resetMeganeHomeGuideV87(); else localStorage.removeItem("meganeHomeGuideShownV87b"); if(window.resetMeganeHomeWelcomeV87) window.resetMeganeHomeWelcomeV87(); else localStorage.removeItem("meganeHomeWelcomeShownV87b"); var rb=document.getElementById("cardRandomTestButton"); if(rb) rb.style.display="none"; var rp=document.getElementById("cardRandomTestPanel"); if(rp) rp.style.display="none"; toast("Developer＋Home通知 初期化"); }
       if(a==="resetUnlocks"){ localStorage.removeItem("megane_dev_card_kinds"); localStorage.removeItem("megane_dev_card_complete"); localStorage.removeItem("megane_dev_unlock_all"); toast("解除テスト初期化"); }
       if(a==="resetAllDanger" && confirm("localStorageを全削除しますか？")){ localStorage.clear(); toast("localStorage全削除"); }
     }; });
