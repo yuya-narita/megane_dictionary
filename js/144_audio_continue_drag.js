@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production7
+/* 144_audio_continue_drag.js production8
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -35,6 +35,9 @@
   var rightPressStartedAt = 0;
   var rightPressActive = false;
   var saveAt = 0;
+  var resumeWanted = false;
+  var autoResumeBusy = false;
+  var hasGoneBackground = false;
 
   function q(id){ return document.getElementById(id); }
 
@@ -276,6 +279,7 @@
       title:meta.title,
       subtitle:meta.subtitle,
       artwork:meta.artwork,
+      resumeWanted:resumeWanted === true,
       savedAt:Date.now()
     };
   }
@@ -302,9 +306,9 @@
         height:62px;
         box-sizing:border-box;
         display:grid;
-        grid-template-columns:46px minmax(0,1fr) 38px 48px;
+        grid-template-columns:46px minmax(0,1fr) 36px 48px;
         align-items:center;
-        gap:10px;
+        column-gap:8px;
         padding:8px 9px;
         border:1px solid rgba(255,255,255,.16);
         border-radius:21px;
@@ -330,11 +334,27 @@
       .mp144-title{font-size:14px;font-weight:900}
       .mp144-sub{font-size:11px;font-weight:750;color:rgba(255,255,255,.58)}
       .mp144-fav{
-        width:36px;height:36px;border:0;border-radius:50%;
-        display:grid;place-items:center;
-        background:transparent;color:rgba(255,255,255,.58);
-        font-size:24px;font-weight:900;
+        width:36px;
+        height:44px;
+        padding:0;
+        margin:0;
+        border:0;
+        border-radius:50%;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        align-self:center;
+        justify-self:center;
+        background:transparent;
+        color:rgba(255,255,255,.58);
+        font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+        font-size:25px;
+        font-weight:700;
+        line-height:1;
+        transform:translateY(-1px);
         touch-action:manipulation;
+        -webkit-appearance:none;
+        appearance:none;
       }
       .mp144-fav.on{
         color:#ffe76a;
@@ -707,6 +727,7 @@
 
     activeAudio=a;
     activeType=saved.type;
+    resumeWanted=true;
 
     if(saved.type==="conference"){
       // 25_conference_player_solid.js の700ms同期にsrcを戻されないよう、
@@ -793,11 +814,15 @@
     var playing=playingAudio();
 
     if(!playing){
+      resumeWanted=true;
       return restoreSaved();
     }
 
     activeAudio=playing.audio;
     activeType=playing.type;
+
+    // ミニプレイヤーから明示的に止めた場合は自動再開しない。
+    resumeWanted=false;
 
     if(playing.type==="music" &&
        typeof window.MEGANE_MUSIC_V7_TOGGLE_CURRENT==="function"){
@@ -828,6 +853,7 @@
       a.addEventListener(ev,function(){
         activeAudio=a;
         activeType=type;
+        resumeWanted=true;
         save(a,type,true);
         var bar=q(BAR_ID); if(bar && !bar.hidden) renderBar();
       });
@@ -843,6 +869,7 @@
     ["pause","ended"].forEach(function(ev){
       a.addEventListener(ev,function(){
         if(activeAudio===a && isAudioUsable(a)){
+          if(!document.hidden) resumeWanted=false;
           save(a,type,true);
         }
         var bar=q(BAR_ID); if(bar && !bar.hidden) renderBar();
@@ -874,6 +901,7 @@
       activeType=type;
       save(a,type,true);
     }else if((e.type==="pause" || e.type==="ended") && activeAudio===a){
+      if(!document.hidden) resumeWanted=false;
       if(isAudioUsable(a)) save(a,type,true);
     }
 
@@ -978,7 +1006,45 @@
     // 長押し後に生成されるghost click / 99側の重複clickを遮断。
     window.addEventListener("click",blockGhostActivation,true);
 
+    function tryAutoResume(){
+      if(!hasGoneBackground || autoResumeBusy) return false;
+
+      var saved=readJSON(STORE,null);
+      if(!saved || saved.resumeWanted!==true) return false;
+
+      var playing=playingAudio();
+      if(playing) return true;
+
+      autoResumeBusy=true;
+      resumeWanted=true;
+
+      var ok=false;
+      try{
+        ok=restoreSaved();
+      }catch(_){
+        ok=false;
+      }
+
+      // iOSが自動再生を拒否した場合も、▶の手動Continueはそのまま残す。
+      setTimeout(function(){
+        autoResumeBusy=false;
+        renderBar();
+      },900);
+
+      return ok;
+    }
+
     function saveBeforeBackground(){
+      hasGoneBackground=true;
+
+      // 外へ出る直前に「再生中だったか」を保存する。
+      var playing=playingAudio();
+      if(playing){
+        resumeWanted=true;
+        activeAudio=playing.audio;
+        activeType=playing.type;
+      }
+
       // 実際に最後に鳴っていたownerだけ保存する。
       if(activeAudio && isAudioUsable(activeAudio)){
         save(activeAudio,activeType || audioTypeOf(activeAudio),true);
@@ -1000,6 +1066,11 @@
         requestAnimationFrame(function(){ restoreVisibility(); });
         setTimeout(restoreVisibility,120);
       }
+
+      // 検索へ出る直前に再生中だった場合だけ、自動Resumeを試す。
+      requestAnimationFrame(tryAutoResume);
+      setTimeout(tryAutoResume,160);
+      setTimeout(tryAutoResume,520);
     }
 
     window.addEventListener("pagehide",saveBeforeBackground);
