@@ -1275,6 +1275,32 @@
 
   window.MEGANE_MUSIC_V7_RENDER = render;
   window.MEGANE_MUSIC_V7_OPEN_FAVORITES = switchToFavorites;
+
+  // v9 API:
+  // 下部ナビの★から「保護した曲一覧」を直接開く。
+  // 現在再生中のアルバム・曲・キューは変更しない。
+  window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST = function(){
+    var wasAlbum = state.album;
+    var wasTrack = state.track;
+    var wasQueue = state.queueMode;
+
+    state.browsingAlbum = -1;
+    state.browsingTrack = 0;
+    state.screen = "player";
+    state.sheet = true;
+    state.lyrics = false;
+    state.sheetScrollTop = 0;
+    state.sheetAlbumKey = "favorites";
+
+    state.queueMode = wasQueue || "album";
+    state.album = wasAlbum;
+    state.track = wasTrack;
+
+    saveState();
+    render();
+    restoreSheetScroll();
+  };
+
   window.MEGANE_MUSIC_V7_OPEN_ALBUMS = function(){ state.screen = "albums"; state.sheet = false; state.lyrics = false; render(); };
 })();
 

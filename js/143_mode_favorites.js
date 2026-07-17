@@ -1,20 +1,19 @@
-/* 143_mode_favorites.js v2
- * 修正:
- * - 音楽モードで辞書お気に入りが開く競合を遮断
- * - 会議モードで辞書お気に入りが背面に残る競合を遮断
- * - 会議お気に入りを左スワイプ削除
- * - 音楽お気に入りは既存の左スワイプ削除UIをそのまま使用
+/* 143_mode_favorites.js v3
+ * - 音楽中央★：保護した曲一覧を直接開く
+ * - 勝手に「保護しました♪」プレイヤーへ移動しない
+ * - 会議中央★：お気に入り会議一覧
+ * - 会議一覧は左スワイプ削除
+ * - 辞書お気に入りとの二重表示を遮断
  */
 (() => {
   "use strict";
 
-  const STYLE_ID = "modeFavorites143StyleV2";
+  const STYLE_ID = "modeFavorites143StyleV3";
   const DIALOG_ID = "modeFavorites143Dialog";
   const LIST_ID = "modeFavorites143List";
   const CONF_FAV_KEY = "megane_conf_favorites";
 
-  let handling = false;
-  let lastHandledAt = 0;
+  let clickLock = false;
 
   function q(id){ return document.getElementById(id); }
 
@@ -30,18 +29,15 @@
     return "dictionary";
   }
 
-  function isCenterButton(target){
-    return !!(
-      target &&
-      target.closest &&
-      target.closest("#randomWord,#randomWordFixed")
-    );
+  function centerButtonFrom(target){
+    return target && target.closest
+      ? target.closest("#randomWord,#randomWordFixed")
+      : null;
   }
 
   function closeDictionaryFavorites(){
     const dlg = q("favoriteDialog");
     if(!dlg) return;
-
     try{
       if(dlg.open && typeof dlg.close === "function") dlg.close();
       else dlg.removeAttribute("open");
@@ -50,7 +46,7 @@
     }
   }
 
-  function readRawConfFavs(){
+  function readConfFavs(){
     try{
       return JSON.parse(localStorage.getItem(CONF_FAV_KEY) || "{}");
     }catch(_){
@@ -58,23 +54,25 @@
     }
   }
 
-  function isConfFavorite(store, id){
+  function isConfFavorite(store,id){
     if(Array.isArray(store)) return store.includes(id);
     return !!(store && store[id]);
   }
 
   function removeConfFavorite(id){
-    const store = readRawConfFavs();
+    const store = readConfFavs();
 
     if(Array.isArray(store)){
-      const next = store.filter(x => x !== id);
-      localStorage.setItem(CONF_FAV_KEY, JSON.stringify(next));
+      localStorage.setItem(
+        CONF_FAV_KEY,
+        JSON.stringify(store.filter(x => x !== id))
+      );
       return;
     }
 
     if(store && typeof store === "object"){
       delete store[id];
-      localStorage.setItem(CONF_FAV_KEY, JSON.stringify(store));
+      localStorage.setItem(CONF_FAV_KEY,JSON.stringify(store));
     }
   }
 
@@ -94,18 +92,11 @@
       .replace(/"/g,"&quot;");
   }
 
-  function conferenceNumber(story, index){
-    const candidates = [
-      story && story.no,
-      story && story.number,
-      story && story.id
-    ];
-
-    for(const value of candidates){
+  function conferenceNumber(story,index){
+    for(const value of [story && story.no,story && story.number,story && story.id]){
       const m = String(value || "").match(/(\d{1,4})/);
       if(m) return String(Number(m[1])).padStart(3,"0");
     }
-
     return String(index + 1).padStart(3,"0");
   }
 
@@ -170,23 +161,32 @@
         position:relative;
         overflow:hidden;
         border-radius:22px;
-        background:rgba(255,70,70,.18);
+        background:rgba(210,45,55,.78);
       }
 
       .mf143-delete-bg{
         position:absolute;
-        inset:0 0 0 auto;
+        right:0;
+        top:0;
+        bottom:0;
         width:92px;
         display:grid;
         place-items:center;
         color:#fff;
         font-size:13px;
         font-weight:900;
+        opacity:0;
+        transition:opacity .08s linear;
         pointer-events:none;
+      }
+
+      .mf143-row-wrap.swiping .mf143-delete-bg{
+        opacity:1;
       }
 
       .mf143-row{
         position:relative;
+        z-index:1;
         width:100%;
         display:grid;
         grid-template-columns:76px minmax(0,1fr);
@@ -196,7 +196,7 @@
         padding:12px;
         border:1px solid rgba(255,255,255,.12);
         border-radius:22px;
-        background:rgba(255,255,255,.055);
+        background:rgb(29,32,43);
         color:#fff;
         text-align:left;
         transform:translateX(0);
@@ -208,10 +208,6 @@
 
       .mf143-row.dragging{
         transition:none;
-      }
-
-      .mf143-row.delete-ready{
-        transform:translateX(-92px);
       }
 
       .mf143-row.removing{
@@ -278,11 +274,11 @@
 
     document.body.appendChild(dlg);
 
-    dlg.querySelector(".mf143-close").addEventListener("click", () => {
+    dlg.querySelector(".mf143-close").addEventListener("click",() => {
       try{ dlg.close(); }catch(_){ dlg.removeAttribute("open"); }
     });
 
-    dlg.addEventListener("click", e => {
+    dlg.addEventListener("click",e => {
       if(e.target === dlg){
         try{ dlg.close(); }catch(_){ dlg.removeAttribute("open"); }
       }
@@ -291,22 +287,21 @@
     return dlg;
   }
 
-  function openConferenceByIndex(idx){
-    const data = stories();
-    const story = data[idx];
+  function openConferenceByIndex(index){
+    const story = stories()[index];
     if(!story) return;
 
     try{
-      window.selectedMangaIndex = idx;
-      window.mangaStoryIndex = idx;
+      window.selectedMangaIndex = index;
+      window.mangaStoryIndex = index;
       window.mangaPageIndex = 0;
       window.mangaReadMode = "page";
       window.mangaState = "reader";
       window.appMode = "manga";
     }catch(_){}
 
-    try { if(typeof selectedMangaIndex !== "undefined") selectedMangaIndex = idx; } catch(_){}
-    try { if(typeof mangaStoryIndex !== "undefined") mangaStoryIndex = idx; } catch(_){}
+    try { if(typeof selectedMangaIndex !== "undefined") selectedMangaIndex = index; } catch(_){}
+    try { if(typeof mangaStoryIndex !== "undefined") mangaStoryIndex = index; } catch(_){}
     try { if(typeof mangaPageIndex !== "undefined") mangaPageIndex = 0; } catch(_){}
     try { if(typeof mangaReadMode !== "undefined") mangaReadMode = "page"; } catch(_){}
     try { if(typeof mangaState !== "undefined") mangaState = "reader"; } catch(_){}
@@ -320,68 +315,73 @@
     }catch(_){}
   }
 
-  function attachConferenceSwipe(wrapper, row, storyId, index){
+  function bindSwipe(wrapper,row,storyId,index){
     let startX = 0;
     let startY = 0;
     let dx = 0;
-    let dragging = false;
-    let moved = false;
+    let horizontal = false;
+    let suppressClick = false;
 
-    row.addEventListener("touchstart", e => {
+    row.addEventListener("touchstart",e => {
       const t = e.touches && e.touches[0];
       if(!t) return;
       startX = t.clientX;
       startY = t.clientY;
       dx = 0;
-      moved = false;
-      dragging = true;
+      horizontal = false;
       row.classList.add("dragging");
-    }, {passive:true});
+    },{passive:true});
 
-    row.addEventListener("touchmove", e => {
-      if(!dragging) return;
+    row.addEventListener("touchmove",e => {
       const t = e.touches && e.touches[0];
       if(!t) return;
 
       const nextX = t.clientX - startX;
       const nextY = t.clientY - startY;
 
-      if(Math.abs(nextY) > Math.abs(nextX)) return;
-
-      dx = Math.min(0, Math.max(-112, nextX));
-      if(Math.abs(dx) > 8) moved = true;
-      row.style.transform = `translateX(${dx}px)`;
-    }, {passive:true});
-
-    row.addEventListener("touchend", () => {
-      if(!dragging) return;
-      dragging = false;
-      row.classList.remove("dragging");
-
-      if(dx <= -78){
-        row.classList.add("delete-ready");
-        row.style.transform = "";
-        window.setTimeout(() => {
-          removeConfFavorite(storyId);
-          row.classList.add("removing");
-          window.setTimeout(() => {
-            wrapper.remove();
-            const list = q(LIST_ID);
-            if(list && !list.querySelector(".mf143-row-wrap")){
-              list.innerHTML = `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
-            }
-          },180);
-        },70);
-      }else{
-        row.style.transform = "";
-        row.classList.remove("delete-ready");
+      if(!horizontal){
+        horizontal =
+          Math.abs(nextX) > 10 &&
+          Math.abs(nextX) > Math.abs(nextY) * 1.15;
       }
 
-      window.setTimeout(() => { moved = false; },160);
-    }, {passive:true});
+      if(!horizontal) return;
 
-    row.addEventListener("click", e => {
-      if(moved) {
+      e.preventDefault();
+      dx = Math.min(0,Math.max(-125,nextX));
+      suppressClick = Math.abs(dx) > 8;
+      wrapper.classList.add("swiping");
+      row.style.transform = `translateX(${dx}px)`;
+    },{passive:false});
+
+    row.addEventListener("touchend",() => {
+      row.classList.remove("dragging");
+
+      if(horizontal && dx <= -82){
+        row.classList.add("removing");
+        window.setTimeout(() => {
+          removeConfFavorite(storyId);
+          wrapper.remove();
+
+          const list = q(LIST_ID);
+          if(list && !list.querySelector(".mf143-row-wrap")){
+            list.innerHTML =
+              `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
+          }
+        },180);
+      }else{
+        row.style.transform = "";
+        wrapper.classList.remove("swiping");
+      }
+
+      window.setTimeout(() => {
+        horizontal = false;
+        suppressClick = false;
+      },180);
+    },{passive:true});
+
+    row.addEventListener("click",e => {
+      if(suppressClick){
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -398,46 +398,48 @@
 
     const dlg = ensureDialog();
     const list = q(LIST_ID);
-    const store = readRawConfFavs();
-    const data = stories();
+    const store = readConfFavs();
 
-    const rows = data
+    const rows = stories()
       .map((story,index) => ({story,index}))
-      .filter(x => x.story && x.story.id && isConfFavorite(store,x.story.id));
+      .filter(x =>
+        x.story &&
+        x.story.id &&
+        isConfFavorite(store,x.story.id)
+      );
 
     if(!rows.length){
-      list.innerHTML = `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
+      list.innerHTML =
+        `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
     }else{
-      list.innerHTML = rows.map(({story,index}) => {
-        const titleText = String(story.title || `Conference ${index + 1}`).replace(/^🎙️?\s*/,"");
-        const thumb = story.thumb
-          ? `<img src="${esc(story.thumb)}" alt="">`
-          : "";
-        const no = conferenceNumber(story,index);
-
-        return `
-          <div class="mf143-row-wrap">
-            <div class="mf143-delete-bg">削除</div>
-            <button
-              type="button"
-              class="mf143-row"
-              data-conf-index="${index}"
-              data-conf-id="${esc(story.id)}"
-            >
-              <span class="mf143-thumb">${thumb}</span>
-              <span class="mf143-meta">
-                <span class="mf143-title">🎙 ${esc(titleText)}</span>
-                <span class="mf143-sub">Syntax Conference｜#${esc(no)}</span>
+      list.innerHTML = rows.map(({story,index}) => `
+        <div class="mf143-row-wrap">
+          <div class="mf143-delete-bg">削除</div>
+          <button
+            type="button"
+            class="mf143-row"
+            data-conf-id="${esc(story.id)}"
+            data-conf-index="${index}"
+          >
+            <span class="mf143-thumb">
+              ${story.thumb ? `<img src="${esc(story.thumb)}" alt="">` : ""}
+            </span>
+            <span class="mf143-meta">
+              <span class="mf143-title">
+                🎙 ${esc(String(story.title || "").replace(/^🎙️?\s*/,""))}
               </span>
-            </button>
-          </div>
-        `;
-      }).join("");
+              <span class="mf143-sub">
+                Syntax Conference｜#${conferenceNumber(story,index)}
+              </span>
+            </span>
+          </button>
+        </div>
+      `).join("");
 
       list.querySelectorAll(".mf143-row-wrap").forEach(wrapper => {
         const row = wrapper.querySelector(".mf143-row");
         if(!row) return;
-        attachConferenceSwipe(
+        bindSwipe(
           wrapper,
           row,
           row.dataset.confId,
@@ -457,60 +459,60 @@
   function openMusicFavorites(){
     closeDictionaryFavorites();
 
-    try{
-      if(typeof window.MEGANE_MUSIC_V7_OPEN_FAVORITES === "function"){
-        window.MEGANE_MUSIC_V7_OPEN_FAVORITES();
-        return true;
-      }
-    }catch(_){}
+    if(typeof window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST === "function"){
+      window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST();
+      return true;
+    }
 
     return false;
   }
 
-  function handleCenterPress(e){
-    if(!isCenterButton(e.target)) return;
+  function blockStart(e){
+    if(!centerButtonFrom(e.target)) return;
+    const current = mode();
+    if(current !== "music" && current !== "conf") return;
 
-    const currentMode = mode();
-    if(currentMode !== "music" && currentMode !== "conf") return;
+    // 既存のお気に入り処理へイベントを渡さない。
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+  }
 
-    const now = Date.now();
-    if(handling || now - lastHandledAt < 350){
-      e.preventDefault();
-      e.stopPropagation();
-      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-      return;
-    }
+  function activate(e){
+    if(!centerButtonFrom(e.target)) return;
 
-    handling = true;
-    lastHandledAt = now;
+    const current = mode();
+    if(current !== "music" && current !== "conf") return;
 
     e.preventDefault();
     e.stopPropagation();
     if(e.stopImmediatePropagation) e.stopImmediatePropagation();
 
-    if(currentMode === "music"){
+    if(clickLock) return;
+    clickLock = true;
+
+    if(current === "music"){
       openMusicFavorites();
     }else{
       openConferenceFavorites();
     }
 
-    window.setTimeout(() => { handling = false; },220);
+    window.setTimeout(() => { clickLock = false; },260);
   }
 
-  function updateCenterLabel(){
+  function updateLabel(){
     const btn = q("randomWord") || q("randomWordFixed");
     if(!btn) return;
 
-    const currentMode = mode();
+    const current = mode();
 
-    if(currentMode === "music"){
+    if(current === "music"){
       btn.textContent = "★";
-      btn.setAttribute("aria-label","保護した曲");
       btn.title = "保護した曲";
-    }else if(currentMode === "conf"){
+      btn.setAttribute("aria-label","保護した曲");
+    }else if(current === "conf"){
       btn.textContent = "★";
-      btn.setAttribute("aria-label","お気に入り会議");
       btn.title = "お気に入り会議";
+      btn.setAttribute("aria-label","お気に入り会議");
     }
   }
 
@@ -518,28 +520,30 @@
     ensureStyle();
     ensureDialog();
 
-    // pointerdownで既存の辞書お気に入り処理より先に奪う。
-    window.addEventListener("pointerdown",handleCenterPress,true);
-    window.addEventListener("touchstart",handleCenterPress,{
+    // 開始イベントは伝播だけ止める。
+    // preventDefaultしないため、iPhoneでもclickは生成される。
+    window.addEventListener("pointerdown",blockStart,true);
+    window.addEventListener("touchstart",blockStart,{
       capture:true,
-      passive:false
+      passive:true
     });
-    window.addEventListener("click",handleCenterPress,true);
+    window.addEventListener("mousedown",blockStart,true);
 
-    const observer = new MutationObserver(() => {
-      requestAnimationFrame(updateCenterLabel);
-    });
+    // 実行はclick一回だけ。
+    window.addEventListener("click",activate,true);
 
-    observer.observe(document.body,{
+    new MutationObserver(() => {
+      requestAnimationFrame(updateLabel);
+    }).observe(document.body,{
       attributes:true,
       attributeFilter:["class"]
     });
 
     document.addEventListener("click",() => {
-      window.setTimeout(updateCenterLabel,60);
+      window.setTimeout(updateLabel,60);
     },true);
 
-    updateCenterLabel();
+    updateLabel();
   }
 
   if(document.readyState === "loading"){
