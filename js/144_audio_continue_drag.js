@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production5
+/* 144_audio_continue_drag.js production6
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -92,6 +92,27 @@
     return null;
   }
 
+  function setConferenceStoryById(id){
+    if(!id) return false;
+    var list=conferenceStories();
+    var index=list.findIndex(function(story){
+      return story && story.id===id;
+    });
+    if(index<0) return false;
+
+    try{
+      window.selectedMangaIndex=index;
+      window.mangaStoryIndex=index;
+      window.mangaPageIndex=0;
+    }catch(_){}
+    try{ if(typeof selectedMangaIndex!=="undefined") selectedMangaIndex=index; }catch(_){}
+    try{ if(typeof mangaStoryIndex!=="undefined") mangaStoryIndex=index; }catch(_){}
+    try{ if(typeof mangaPageIndex!=="undefined") mangaPageIndex=0; }catch(_){}
+
+    try{ localStorage.setItem("megane_current_conference_id",id); }catch(_){}
+    return true;
+  }
+
   function conferenceNo(story,index){
     var values=[
       story && story.no,
@@ -146,7 +167,7 @@
     return !!(a && (a.currentSrc || a.src || a.getAttribute("src")));
   }
 
-  function detectAudio(){
+  function playingAudio(){
     var ma=musicAudio();
     var ca=confAudio();
 
@@ -159,36 +180,27 @@
     if(isAudioUsable(ca) && !ca.paused && !ca.ended){
       return {audio:ca,type:"conference"};
     }
-
-    // 復帰時は、画面に残っている古いaudioではなく
-    // 最後に実際に再生して保存した種類を優先する。
-    var saved=readJSON(STORE,null);
-    if(saved){
-      if(saved.type==="music" && isAudioUsable(ma)){
-        return {audio:ma,type:"music"};
-      }
-      if(saved.type==="conference" && isAudioUsable(ca)){
-        return {audio:ca,type:"conference"};
-      }
-    }
-
-    if(activeAudio && isAudioUsable(activeAudio)){
-      return {audio:activeAudio,type:activeType || audioTypeOf(activeAudio)};
-    }
-    if(isAudioUsable(ma)) return {audio:ma,type:"music"};
-    if(isAudioUsable(ca)) return {audio:ca,type:"conference"};
     return null;
+  }
+
+  function detectAudio(){
+    // 鳴っているものがある時だけDOM側を採用。
+    // 停止中は常に保存済みownerを正とする。
+    return playingAudio();
   }
 
   function mediaMeta(type){
     var title="";
     var subtitle="";
     var artwork="";
+    var itemId="";
+    var storyId="";
 
     if(type==="music" && typeof window.MEGANE_MUSIC_V7_NOW==="function"){
       try{
         var m=window.MEGANE_MUSIC_V7_NOW();
         if(m){
+          itemId=m.id || "";
           title=m.title || "";
           subtitle=m.subtitle || "";
           artwork=m.artwork || "";
@@ -209,6 +221,8 @@
       var info=conferenceStoryForAudio(activeAudio || confAudio());
       if(info && info.story){
         var story=info.story;
+        storyId=story.id || "";
+        itemId=storyId;
         title=story.title || title || "Syntax Conference";
         subtitle="Syntax Conference｜#"+conferenceNo(story,info.index);
         artwork=story.playerImage || story.thumb || artwork || "";
@@ -232,6 +246,8 @@
     }
 
     return {
+      id:itemId,
+      storyId:storyId,
       title:title || (type==="music" ? "MEGANE MUSIC" : "Syntax Conference"),
       subtitle:subtitle || (type==="music" ? "Music" : "Conference"),
       artwork:artwork
@@ -253,6 +269,8 @@
     }
     return {
       type:type,
+      id:meta.id || "",
+      storyId:meta.storyId || "",
       src:a.currentSrc || a.src || a.getAttribute("src") || "",
       time:Number(a.currentTime || 0),
       title:meta.title,
@@ -284,7 +302,7 @@
         height:62px;
         box-sizing:border-box;
         display:grid;
-        grid-template-columns:46px minmax(0,1fr) 48px;
+        grid-template-columns:46px minmax(0,1fr) 38px 48px;
         align-items:center;
         gap:10px;
         padding:8px 9px;
@@ -311,6 +329,17 @@
       .mp144-title,.mp144-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .mp144-title{font-size:14px;font-weight:900}
       .mp144-sub{font-size:11px;font-weight:750;color:rgba(255,255,255,.58)}
+      .mp144-fav{
+        width:36px;height:36px;border:0;border-radius:50%;
+        display:grid;place-items:center;
+        background:transparent;color:rgba(255,255,255,.58);
+        font-size:24px;font-weight:900;
+        touch-action:manipulation;
+      }
+      .mp144-fav.on{
+        color:#ffe76a;
+        text-shadow:0 0 13px rgba(255,229,88,.78);
+      }
       .mp144-toggle{
         width:44px;height:44px;border:0;border-radius:50%;
         display:grid;place-items:center;
@@ -341,9 +370,19 @@
         '<div class="mp144-title">最後の音声</div>'+
         '<div class="mp144-sub">長押しで呼び出しました</div>'+
       '</div>'+
+      '<button type="button" class="mp144-fav" aria-label="お気に入り">☆</button>'+
       '<button type="button" class="mp144-toggle" aria-label="再生">▶</button>';
 
     document.body.appendChild(bar);
+
+    var fav=bar.querySelector(".mp144-fav");
+    fav.addEventListener("pointerdown",function(e){ e.stopPropagation(); },true);
+    fav.addEventListener("click",function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleFavorite();
+      renderBar();
+    },true);
 
     var toggle=bar.querySelector(".mp144-toggle");
     toggle.addEventListener("pointerdown",function(e){ e.stopPropagation(); },true);
@@ -455,7 +494,7 @@
     var moved=false;
 
     bar.addEventListener("pointerdown",function(e){
-      if(e.target.closest(".mp144-toggle")) return;
+      if(e.target.closest(".mp144-toggle,.mp144-fav")) return;
       dragging=true;
       moved=false;
       sx=e.clientX; sy=e.clientY;
@@ -506,33 +545,94 @@
     bar.addEventListener("pointercancel",end);
   }
 
+  function readFavoriteState(data){
+    if(!data) return false;
+
+    if(data.type==="music"){
+      try{
+        if(typeof window.MEGANE_MUSIC_V7_IS_FAVORITE==="function"){
+          return !!window.MEGANE_MUSIC_V7_IS_FAVORITE(data.id || "");
+        }
+      }catch(_){}
+      try{
+        var musicFavs=JSON.parse(localStorage.getItem("megane_music_v7_favs") || "[]") || [];
+        return musicFavs.indexOf(data.id || "")>=0;
+      }catch(_){ return false; }
+    }
+
+    if(data.type==="conference"){
+      try{
+        var confFavs=JSON.parse(localStorage.getItem("megane_conf_favorites") || "{}") || {};
+        return !!confFavs[data.storyId || data.id || ""];
+      }catch(_){ return false; }
+    }
+
+    return false;
+  }
+
+  function toggleFavorite(){
+    var saved=readJSON(STORE,null);
+    var playing=playingAudio();
+    var data=playing ? snapshot(playing.audio,playing.type) : saved;
+    if(!data) return false;
+
+    if(data.type==="music"){
+      try{
+        if(typeof window.MEGANE_MUSIC_V7_TOGGLE_FAVORITE==="function"){
+          return window.MEGANE_MUSIC_V7_TOGGLE_FAVORITE(data.id || "");
+        }
+      }catch(_){}
+
+      try{
+        var list=JSON.parse(localStorage.getItem("megane_music_v7_favs") || "[]") || [];
+        var id=data.id || "";
+        if(!id) return false;
+        var at=list.indexOf(id);
+        if(at>=0) list.splice(at,1);
+        else list.push(id);
+        localStorage.setItem("megane_music_v7_favs",JSON.stringify(list));
+        return at<0;
+      }catch(_){ return false; }
+    }
+
+    if(data.type==="conference"){
+      try{
+        var map=JSON.parse(localStorage.getItem("megane_conf_favorites") || "{}") || {};
+        var storyId=data.storyId || data.id || "";
+        if(!storyId) return false;
+        map[storyId]=!map[storyId];
+        localStorage.setItem("megane_conf_favorites",JSON.stringify(map));
+        return !!map[storyId];
+      }catch(_){ return false; }
+    }
+
+    return false;
+  }
+
   function renderBar(){
     var bar=ensureBar();
-    var found=detectAudio();
+    var playing=playingAudio();
     var saved=readJSON(STORE,null);
-    var data=null;
-    var playing=false;
-
-    if(found){
-      activeAudio=found.audio;
-      activeType=found.type;
-      data=snapshot(found.audio,found.type);
-      playing=!found.audio.paused && !found.audio.ended;
-    }else{
-      data=saved;
-    }
+    var data=playing ? snapshot(playing.audio,playing.type) : saved;
+    var isPlaying=!!playing;
 
     if(!data) return false;
 
     var art=bar.querySelector(".mp144-art");
     var title=bar.querySelector(".mp144-title");
     var sub=bar.querySelector(".mp144-sub");
+    var fav=bar.querySelector(".mp144-fav");
     var btn=bar.querySelector(".mp144-toggle");
 
     title.textContent=data.title || "最後の音声";
     sub.textContent=data.subtitle || (data.type==="music" ? "Music" : "Conference");
-    btn.textContent=playing ? "Ⅱ" : "▶";
-    btn.setAttribute("aria-label",playing ? "一時停止" : "続きから再生");
+    btn.textContent=isPlaying ? "Ⅱ" : "▶";
+    btn.setAttribute("aria-label",isPlaying ? "一時停止" : "続きから再生");
+
+    var favoriteOn=readFavoriteState(data);
+    fav.textContent=favoriteOn ? "★" : "☆";
+    fav.classList.toggle("on",favoriteOn);
+    fav.setAttribute("aria-label",favoriteOn ? "お気に入り解除" : "お気に入りに追加");
 
     if(data.artwork){
       art.innerHTML='<img src="'+String(data.artwork).replace(/"/g,"&quot;")+'" alt="">';
@@ -591,45 +691,53 @@
     activeAudio=a;
     activeType=saved.type;
 
+    if(saved.type==="conference"){
+      // 25_conference_player_solid.js の700ms同期にsrcを戻されないよう、
+      // 先に選択中Conferenceを保存済み回へ合わせる。
+      setConferenceStoryById(saved.storyId || saved.id || "");
+    }
+
     try{
       var current=absUrl(a.currentSrc || a.src || a.getAttribute("src") || "");
       var target=absUrl(saved.src || "");
 
       if(target && current!==target){
-        a.pause();
-        a.src=saved.src;
-        a.load();
+        try{ a.pause(); }catch(_){}
+        a.setAttribute("src",saved.src);
+        try{ a.load(); }catch(_){}
       }
 
-      var resumed=false;
-      var playNow=function(){
-        if(resumed) return;
-        resumed=true;
+      var applied=false;
+      var applyPositionAndPlay=function(){
+        if(applied) return;
 
         try{
-          var maxTime=Number.isFinite(a.duration) && a.duration>0
-            ? Math.max(0,a.duration-.2)
-            : Number(saved.time || 0);
-          var wanted=Math.max(0,Math.min(Number(saved.time || 0),maxTime));
+          var duration=Number(a.duration || 0);
+          var wanted=Math.max(0,Number(saved.time || 0));
+          if(duration>0 && isFinite(duration)){
+            wanted=Math.min(wanted,Math.max(0,duration-.2));
+          }
 
-          if(wanted>0 && Math.abs((a.currentTime||0)-wanted)>.75){
+          if(wanted>0 && Math.abs(Number(a.currentTime || 0)-wanted)>.5){
             a.currentTime=wanted;
           }
         }catch(_){}
+
+        applied=true;
 
         try{
           var p=a.play();
           if(p && p.catch) p.catch(function(){});
         }catch(_){}
 
-        renderBar();
+        setTimeout(renderBar,50);
       };
 
       if(a.readyState>=1){
-        playNow();
+        applyPositionAndPlay();
       }else{
-        a.addEventListener("loadedmetadata",playNow,{once:true});
-        setTimeout(playNow,900);
+        a.addEventListener("loadedmetadata",applyPositionAndPlay,{once:true});
+        setTimeout(applyPositionAndPlay,1200);
       }
 
       return true;
@@ -658,34 +766,32 @@
   }
 
   function toggleAudio(){
-    var found=detectAudio();
-    if(!found) return restoreSaved();
+    var playing=playingAudio();
 
-    activeAudio=found.audio;
-    activeType=found.type;
+    if(!playing){
+      return restoreSaved();
+    }
 
-    if(found.type==="music" &&
+    activeAudio=playing.audio;
+    activeType=playing.type;
+
+    if(playing.type==="music" &&
        typeof window.MEGANE_MUSIC_V7_TOGGLE_CURRENT==="function"){
       var ok=window.MEGANE_MUSIC_V7_TOGGLE_CURRENT();
       setTimeout(renderBar,40);
       return ok;
     }
 
-    if(found.type==="conference"){
-      return toggleConference(found.audio);
+    if(playing.type==="conference"){
+      return toggleConference(playing.audio);
     }
 
     try{
-      if(!found.audio.paused){
-        found.audio.pause();
-      }else{
-        var p=found.audio.play();
-        if(p && p.catch) p.catch(function(){ restoreSaved(); });
-      }
+      playing.audio.pause();
       setTimeout(renderBar,40);
       return true;
     }catch(_){
-      return restoreSaved();
+      return false;
     }
   }
 
@@ -703,25 +809,26 @@
       });
     });
 
-    ["pause","ended"].forEach(function(ev){
-      a.addEventListener(ev,function(){
-        // 現在操作中のaudioだけ保存する。
-        if(activeAudio===a && isAudioUsable(a)) save(a,type,true);
-        var bar=q(BAR_ID); if(bar && !bar.hidden) renderBar();
-      });
-    });
-
-    a.addEventListener("loadedmetadata",function(){
-      // metadata読込だけで最後の音声を上書きしない。
-      var bar=q(BAR_ID);
-      if(bar && !bar.hidden && activeAudio===a) renderBar();
-    });
-
     a.addEventListener("timeupdate",function(){
       if(a.paused || a.ended) return;
       activeAudio=a;
       activeType=type;
       save(a,type,false);
+    });
+
+    ["pause","ended"].forEach(function(ev){
+      a.addEventListener(ev,function(){
+        if(activeAudio===a && isAudioUsable(a)){
+          save(a,type,true);
+        }
+        var bar=q(BAR_ID); if(bar && !bar.hidden) renderBar();
+      });
+    });
+
+    a.addEventListener("loadedmetadata",function(){
+      // 読み込まれただけのConferenceはownerにしない。
+      var bar=q(BAR_ID);
+      if(bar && !bar.hidden) renderBar();
     });
   }
 
@@ -742,23 +849,12 @@
       activeAudio=a;
       activeType=type;
       save(a,type,true);
-
-      var bar=q(BAR_ID);
-      if(bar && !bar.hidden) renderBar();
-      return;
-    }
-
-    if((e.type==="pause" || e.type==="ended") && activeAudio===a){
+    }else if((e.type==="pause" || e.type==="ended") && activeAudio===a){
       if(isAudioUsable(a)) save(a,type,true);
-      var visibleBar=q(BAR_ID);
-      if(visibleBar && !visibleBar.hidden) renderBar();
-      return;
     }
 
-    if(e.type==="loadedmetadata"){
-      var metaBar=q(BAR_ID);
-      if(metaBar && !metaBar.hidden && activeAudio===a) renderBar();
-    }
+    var bar=q(BAR_ID);
+    if(bar && !bar.hidden) renderBar();
   }
 
   function isRightButtonEvent(e){
@@ -859,6 +955,7 @@
     window.addEventListener("click",blockGhostActivation,true);
 
     function saveBeforeBackground(){
+      // 実際に最後に鳴っていたownerだけ保存する。
       if(activeAudio && isAudioUsable(activeAudio)){
         save(activeAudio,activeType || audioTypeOf(activeAudio),true);
       }
@@ -867,18 +964,12 @@
     function resumeUI(){
       bindAudios();
 
-      // 復帰時は保存済みの種類を正とし、
-      // idle状態のConference audioなどで上書きしない。
+      // 保存済みownerを表示するだけ。
+      // 停止中のConference audioを推測採用しない。
       var saved=readJSON(STORE,null);
       if(saved){
         activeType=saved.type;
-        activeAudio=saved.type==="music" ? musicAudio() : confAudio();
-      }else{
-        var found=detectAudio();
-        if(found){
-          activeAudio=found.audio;
-          activeType=found.type;
-        }
+        activeAudio=null;
       }
 
       if(readUI().visible){

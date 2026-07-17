@@ -1314,6 +1314,7 @@
     var au = audio();
     return {
       type: "music",
+      id: (t && t.id) || "",
       title: info.title || (t && t.title) || "MEGANE MUSIC",
       subtitle: (a && (a._originTitle || a.title)) || "Music",
       artwork: (t && t.cover) || (a && a.cover) || "",
@@ -1338,6 +1339,20 @@
     }catch(_){
       return false;
     }
+  };
+
+  // production6: ミニプレイヤーのお気に入りボタン用
+  window.MEGANE_MUSIC_V7_IS_FAVORITE = function(trackId){
+    var id = trackId || (currentTrack() && currentTrack().id) || "";
+    return isFav(id);
+  };
+
+  window.MEGANE_MUSIC_V7_TOGGLE_FAVORITE = function(trackId){
+    var id = trackId || (currentTrack() && currentTrack().id) || "";
+    if(!id) return false;
+    toggleFav(id);
+    try{ render(); }catch(_){}
+    return isFav(id);
   };
 
   window.MEGANE_MUSIC_V7_OPEN_CURRENT = function(){
