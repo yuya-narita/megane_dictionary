@@ -591,7 +591,7 @@ const musicPlaylists = [
         "cover": "images/music/drug_01.jpg"
       },
       {
-        "id": "sd_01",
+        "id": "sd_02",
         "title": "ECHO BARRIER ― 病原体が意味を学習できなくなる薬 ―",
         "audio": "music/semantic/drug_02.mp3",
         "video": "music/video/echo_barrier.mp4",
