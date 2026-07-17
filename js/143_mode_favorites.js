@@ -9,6 +9,7 @@
   "use strict";
 
   var CONF_KEY = "megane_conf_favorites";
+  var CONF_ORDER_KEY = "megane_conf_favorite_order";
   var DIALOG_ID = "productionConfFavorites143";
   var LIST_ID = "productionConfFavorites143List";
   var STYLE_ID = "productionConfFavorites143Style";
@@ -42,6 +43,44 @@
 
   function writeMap(value){
     try{ localStorage.setItem(CONF_KEY,JSON.stringify(value)); }catch(_){}
+  }
+
+  function readOrder(){
+    try{
+      var value=JSON.parse(localStorage.getItem(CONF_ORDER_KEY) || "[]");
+      return Array.isArray(value) ? value : [];
+    }catch(_){
+      return [];
+    }
+  }
+
+  function writeOrder(order){
+    try{
+      localStorage.setItem(CONF_ORDER_KEY,JSON.stringify(order || []));
+    }catch(_){}
+  }
+
+  function currentConferenceOrder(map){
+    var active=Object.keys(map || {}).filter(function(id){
+      return !!map[id];
+    });
+
+    var order=readOrder().filter(function(id){
+      return active.indexOf(id)>=0;
+    });
+
+    // Mapのキー追加順は古い→新しい。
+    // 順番データにない新規項目は反転して先頭へ置く。
+    var missing=active.filter(function(id){
+      return order.indexOf(id)<0;
+    }).reverse();
+
+    order=missing.concat(order).filter(function(id,index,self){
+      return !!id && self.indexOf(id)===index;
+    });
+
+    writeOrder(order);
+    return order;
   }
 
   function stories(){
@@ -164,6 +203,19 @@
         touch-action:pan-y;
       }
       .p143-row.dragging{transition:none}
+      .p143-wrap.p143-reorder-active{
+        z-index:30;
+        overflow:visible;
+        transform:scale(1.025);
+        box-shadow:0 16px 38px rgba(0,0,0,.50);
+      }
+      .p143-wrap.p143-reorder-active .p143-row{
+        background:rgb(43,47,62);
+      }
+      #${LIST_ID}.p143-reordering{
+        overflow:hidden;
+        touch-action:none;
+      }
       .p143-row.removing{transform:translateX(-120%);opacity:0}
       .p143-thumb{
         width:76px;height:76px;border-radius:15px;
@@ -210,6 +262,10 @@
     var map = readMap();
     delete map[id];
     writeMap(map);
+
+    writeOrder(readOrder().filter(function(x){
+      return x!==id;
+    }));
   }
 
   function openConference(index){
@@ -235,17 +291,73 @@
   }
 
   function bindSwipe(wrap,row,id,index){
-    var sx=0, sy=0, dx=0, horizontal=false, suppress=false;
+    var sx=0;
+    var sy=0;
+    var dx=0;
+    var horizontal=false;
+    var suppress=false;
+    var reorderTimer=0;
+    var reorderActive=false;
+
+    function cancelTimer(){
+      clearTimeout(reorderTimer);
+      reorderTimer=0;
+    }
+
+    function beginReorder(){
+      if(!wrap.isConnected) return;
+
+      reorderActive=true;
+      suppress=true;
+      horizontal=false;
+      dx=0;
+
+      row.style.transform="";
+      row.classList.remove("dragging");
+      wrap.classList.remove("swiping");
+      wrap.classList.add("p143-reorder-active");
+
+      var list=wrap.parentNode;
+      if(list) list.classList.add("p143-reordering");
+
+      try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
+    }
+
+    function finishReorder(){
+      cancelTimer();
+
+      var list=wrap.parentNode;
+      wrap.classList.remove("p143-reorder-active");
+      if(list) list.classList.remove("p143-reordering");
+
+      if(list){
+        var order=Array.from(list.querySelectorAll(".p143-wrap"))
+          .map(function(item){
+            var button=item.querySelector(".p143-row");
+            return button ? button.dataset.id || "" : "";
+          })
+          .filter(Boolean);
+
+        writeOrder(order);
+      }
+
+      reorderActive=false;
+      setTimeout(function(){ suppress=false; },180);
+    }
 
     row.addEventListener("touchstart",function(e){
       var t=e.touches && e.touches[0];
       if(!t) return;
+
       sx=t.clientX;
       sy=t.clientY;
       dx=0;
       horizontal=false;
       suppress=false;
       row.classList.add("dragging");
+
+      cancelTimer();
+      reorderTimer=setTimeout(beginReorder,430);
     },{passive:true});
 
     row.addEventListener("touchmove",function(e){
@@ -254,6 +366,31 @@
 
       var nx=t.clientX-sx;
       var ny=t.clientY-sy;
+
+      if(reorderActive){
+        e.preventDefault();
+        e.stopPropagation();
+
+        var list=wrap.parentNode;
+        if(!list) return;
+
+        var target=document.elementFromPoint(t.clientX,t.clientY);
+        var over=target && target.closest
+          ? target.closest(".p143-wrap")
+          : null;
+
+        if(!over || over===wrap || over.parentNode!==list) return;
+
+        var rect=over.getBoundingClientRect();
+        if(t.clientY < rect.top + rect.height/2){
+          list.insertBefore(wrap,over);
+        }else{
+          list.insertBefore(wrap,over.nextSibling);
+        }
+        return;
+      }
+
+      if(Math.abs(nx)>9 || Math.abs(ny)>9) cancelTimer();
 
       if(!horizontal){
         horizontal=Math.abs(nx)>10 && Math.abs(nx)>Math.abs(ny)*1.15;
@@ -269,6 +406,13 @@
 
     row.addEventListener("touchend",function(){
       row.classList.remove("dragging");
+
+      if(reorderActive){
+        finishReorder();
+        return;
+      }
+
+      cancelTimer();
 
       if(horizontal && dx<=-80){
         row.classList.add("removing");
@@ -292,8 +436,14 @@
       },180);
     },{passive:true});
 
+    row.addEventListener("touchcancel",function(){
+      row.classList.remove("dragging");
+      if(reorderActive) finishReorder();
+      else cancelTimer();
+    },{passive:true});
+
     row.addEventListener("click",function(e){
-      if(suppress){
+      if(suppress || reorderActive){
         stop(e);
         return;
       }
@@ -312,11 +462,16 @@
     var map=readMap();
     var data=stories();
     var rows=[];
+    var byId={};
 
     data.forEach(function(story,index){
-      if(story && story.id && map[story.id]){
-        rows.push({story:story,index:index});
+      if(story && story.id){
+        byId[story.id]={story:story,index:index};
       }
+    });
+
+    currentConferenceOrder(map).forEach(function(id){
+      if(map[id] && byId[id]) rows.push(byId[id]);
     });
 
     if(!rows.length){
