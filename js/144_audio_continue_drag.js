@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production2
+/* 144_audio_continue_drag.js production3
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -10,7 +10,7 @@
  * - 素早く上下へフリックで非表示
  * - 位置・表示状態をlocalStorageへ保存
  * - 再起動／外部検索からの復帰でも再表示
- * - ドラッグ終了時に左右端へ吸着
+ * - ドラッグ位置をそのまま自由保存（吸着なし）
  *
  * 軽量設計
  * - MutationObserverなし
@@ -25,14 +25,15 @@
   var STORE = "megane_audio_continue_144_v1";
   var UI_STORE = "megane_audio_continue_144_ui_v2";
   var LONG_MS = 520;
-  var SNAP_MARGIN = 12;
-  var SNAP_NEAR = 42;
+  var EDGE_MARGIN = 12;
 
   var activeAudio = null;
   var activeType = "";
   var pressTimer = 0;
   var longFired = false;
   var suppressClickUntil = 0;
+  var rightPressStartedAt = 0;
+  var rightPressActive = false;
   var saveAt = 0;
 
   function q(id){ return document.getElementById(id); }
@@ -224,10 +225,6 @@
         touch-action:manipulation;
       }
       #${BAR_ID}.mp144-dragging{transition:none}
-      #${BAR_ID}.mp144-snapping{
-        transition:left .18s cubic-bezier(.2,.8,.2,1),
-                   top .18s cubic-bezier(.2,.8,.2,1);
-      }
       #${BAR_ID}.mp144-hide{
         transition:opacity .16s ease,transform .16s ease;
         opacity:0;
@@ -277,10 +274,10 @@
     var offsetY=vv ? vv.offsetTop : 0;
 
     return {
-      minX:offsetX+SNAP_MARGIN,
-      maxX:Math.max(offsetX+SNAP_MARGIN,offsetX+viewW-w-SNAP_MARGIN),
-      minY:offsetY+SNAP_MARGIN,
-      maxY:Math.max(offsetY+SNAP_MARGIN,offsetY+viewH-h-92)
+      minX:offsetX+EDGE_MARGIN,
+      maxX:Math.max(offsetX+EDGE_MARGIN,offsetX+viewW-w-EDGE_MARGIN),
+      minY:offsetY+EDGE_MARGIN,
+      maxY:Math.max(offsetY+EDGE_MARGIN,offsetY+viewH-h-92)
     };
   }
 
@@ -298,9 +295,13 @@
     var rangeY=Math.max(1,b.maxY-b.minY);
 
     var x;
-    if(state.snapX==="right") x=b.maxX;
-    else if(state.snapX==="left") x=b.minX;
-    else x=b.minX+rangeX*Math.max(0,Math.min(1,Number(state.xRatio||0)));
+    if(state.xRatio!==null){
+      x=b.minX+rangeX*Math.max(0,Math.min(1,Number(state.xRatio)));
+    }else if(state.snapX==="right"){
+      x=b.maxX;
+    }else{
+      x=b.minX;
+    }
 
     var y;
     if(state.snapY==="top") y=b.minY;
@@ -332,41 +333,26 @@
     },extra || {}));
   }
 
-  function snapPosition(bar){
+  function finishFreePosition(bar){
+    // 指を離した位置をそのまま保存する。
+    // 画面外へ出た分だけclampするが、中央配置を含め吸着はしない。
     var r=bar.getBoundingClientRect();
+    var c=clampPosition(bar,r.left,r.top);
+
+    bar.style.left=c.x+"px";
+    bar.style.top=c.y+"px";
+
     var b=viewportBounds(bar);
-
-    var leftDistance=Math.abs(r.left-b.minX);
-    var rightDistance=Math.abs(r.left-b.maxX);
-    var topDistance=Math.abs(r.top-b.minY);
-    var bottomDistance=Math.abs(r.top-b.maxY);
-
-    var snapX=leftDistance<=rightDistance ? "left" : "right";
-    var snapY="";
-    var targetX=snapX==="left" ? b.minX : b.maxX;
-    var targetY=Math.max(b.minY,Math.min(b.maxY,r.top));
-
-    if(topDistance<=SNAP_NEAR){
-      snapY="top";
-      targetY=b.minY;
-    }else if(bottomDistance<=SNAP_NEAR){
-      snapY="bottom";
-      targetY=b.maxY;
-    }
-
-    bar.classList.add("mp144-snapping");
-    bar.style.left=targetX+"px";
-    bar.style.top=targetY+"px";
+    var rangeX=Math.max(1,b.maxX-b.minX);
+    var rangeY=Math.max(1,b.maxY-b.minY);
 
     writeUI({
       visible:true,
-      snapX:snapX,
-      snapY:snapY,
-      xRatio:snapX==="right" ? 1 : 0,
-      yRatio:Math.max(0,Math.min(1,(targetY-b.minY)/Math.max(1,b.maxY-b.minY)))
+      snapX:"",
+      snapY:"",
+      xRatio:Math.max(0,Math.min(1,(c.x-b.minX)/rangeX)),
+      yRatio:Math.max(0,Math.min(1,(c.y-b.minY)/rangeY))
     });
-
-    setTimeout(function(){ bar.classList.remove("mp144-snapping"); },210);
   }
 
   function bindDrag(bar){
@@ -415,7 +401,7 @@
       if(moved && Math.abs(totalY)>=78 && velocity>=0.48){
         hideBar();
       }else{
-        snapPosition(bar);
+        finishFreePosition(bar);
       }
 
       try{ bar.releasePointerCapture(e.pointerId); }catch(_){}
@@ -599,28 +585,66 @@
     bindAudio(confAudio(),"conference");
   }
 
+  function isRightButtonEvent(e){
+    return !!(e && e.target && e.target.closest && e.target.closest("#shareCurrent"));
+  }
+
+  function fireLongPress(){
+    if(!rightPressActive || longFired) return;
+    longFired=true;
+    suppressClickUntil=Date.now()+1200;
+
+    // 表示だけ行う。audio.play / pause / src / loadには一切触れない。
+    showBar({pulse:true});
+
+    try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
+  }
+
   function beginRightPress(e){
-    if(!(e.target && e.target.closest && e.target.closest("#shareCurrent"))) return;
+    if(!isRightButtonEvent(e)) return;
+
+    rightPressStartedAt=Date.now();
+    rightPressActive=true;
     longFired=false;
+
     clearTimeout(pressTimer);
-    pressTimer=setTimeout(function(){
-      longFired=true;
-      suppressClickUntil=Date.now()+650;
-      showBar({pulse:true});
-      try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
-    },LONG_MS);
+    pressTimer=setTimeout(fireLongPress,LONG_MS);
+  }
+
+  function finishRightPress(e){
+    if(!isRightButtonEvent(e)) return;
+
+    var held=Date.now()-rightPressStartedAt;
+    clearTimeout(pressTimer);
+
+    // iOSでは99_nav_real_fixのtouchendが短押し処理を先に走らせるため、
+    // 長押し相当ならwindow capture段階で完全に遮断する。
+    if(longFired || held>=LONG_MS-35){
+      if(!longFired) fireLongPress();
+      suppressClickUntil=Date.now()+1200;
+      stopEvent(e);
+    }
+
+    rightPressActive=false;
   }
 
   function cancelRightPress(e){
-    if(!(e.target && e.target.closest && e.target.closest("#shareCurrent"))) return;
+    if(e && !isRightButtonEvent(e)) return;
     clearTimeout(pressTimer);
+    rightPressActive=false;
+  }
+
+  function blockGhostActivation(e){
+    if(!isRightButtonEvent(e)) return;
+    if(longFired || Date.now()<suppressClickUntil){
+      stopEvent(e);
+    }
   }
 
   // 99_nav_real_fix.jsから短押しclick時に呼ばれる。
   window.MEGANE_AUDIO_CONTINUE_BUTTON=function(e){
     if(longFired || Date.now()<suppressClickUntil){
       stopEvent(e);
-      longFired=false;
       return true;
     }
 
@@ -642,8 +666,16 @@
     bindAudios();
 
     window.addEventListener("pointerdown",beginRightPress,true);
-    window.addEventListener("pointerup",cancelRightPress,true);
+    window.addEventListener("pointerup",finishRightPress,true);
     window.addEventListener("pointercancel",cancelRightPress,true);
+
+    // iPhone Safari/PWAではtouchend経路が別に走るため両方捕捉する。
+    window.addEventListener("touchstart",beginRightPress,{capture:true,passive:true});
+    window.addEventListener("touchend",finishRightPress,{capture:true,passive:false});
+    window.addEventListener("touchcancel",cancelRightPress,{capture:true,passive:true});
+
+    // 長押し後に生成されるghost click / 99側の重複clickを遮断。
+    window.addEventListener("click",blockGhostActivation,true);
 
     function resumeUI(){
       bindAudios();
