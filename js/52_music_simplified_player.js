@@ -375,6 +375,30 @@
     });
     return out;
   }
+
+  function absoluteMusicUrl(src){
+    if(!src) return "";
+    try{ return new URL(src, location.href).href; }
+    catch(e){ return String(src); }
+  }
+
+  function findTrackByAudioSrc(src){
+    var target = absoluteMusicUrl(src);
+    if(!target) return null;
+
+    var list = allTracks();
+    for(var i=0;i<list.length;i++){
+      var t = list[i];
+      if(t && t.audio && absoluteMusicUrl(t.audio) === target) return t;
+    }
+    return null;
+  }
+
+  function actualPlayingTrack(){
+    var au = audio();
+    var src = au && (au.currentSrc || au.src || au.getAttribute("src"));
+    return findTrackByAudioSrc(src) || currentTrack();
+  }
   function favTracks(){
     var f = favs();
     var all = allTracks();
@@ -1308,20 +1332,38 @@
 
   // production144 bridge: 軽量ミニプレイヤー用の読み取り・操作API
   window.MEGANE_MUSIC_V7_NOW = function(){
-    var t = currentTrack();
-    var a = currentAlbum();
-    var info = parseTitle(t, state.track || 0);
     var au = audio();
+    var t = actualPlayingTrack();
+    var album = t && typeof t._album === "number" ? albums()[t._album] : currentAlbum();
+    var index = t && typeof t._track === "number" ? t._track : (state.track || 0);
+    var info = parseTitle(t, index);
+
     return {
       type: "music",
       id: (t && t.id) || "",
       title: info.title || (t && t.title) || "MEGANE MUSIC",
-      subtitle: (a && (a._originTitle || a.title)) || "Music",
-      artwork: (t && t.cover) || (a && a.cover) || "",
+      subtitle: (album && (album._originTitle || album.title)) || "Music",
+      artwork: (t && t.cover) || (album && album.cover) || "",
       src: au ? (au.currentSrc || au.src || "") : "",
       time: au ? Number(au.currentTime || 0) : 0,
-      paused: au ? !!au.paused : true
+      paused: au ? !!au.paused : true,
+      albumIndex: t && typeof t._album === "number" ? t._album : state.album,
+      trackIndex: t && typeof t._track === "number" ? t._track : state.track
     };
+  };
+
+  // 保存済みsrcと内部stateを同期する。
+  window.MEGANE_MUSIC_V7_SYNC_TO_SRC = function(src){
+    var t = findTrackByAudioSrc(src);
+    if(!t) return false;
+
+    state.queueMode = "album";
+    state.album = t._album;
+    state.track = t._track;
+    state.browsingAlbum = t._album;
+    state.browsingTrack = t._track;
+    saveState();
+    return true;
   };
 
   window.MEGANE_MUSIC_V7_TOGGLE_CURRENT = function(){
@@ -1343,12 +1385,14 @@
 
   // production6: ミニプレイヤーのお気に入りボタン用
   window.MEGANE_MUSIC_V7_IS_FAVORITE = function(trackId){
-    var id = trackId || (currentTrack() && currentTrack().id) || "";
+    var t = actualPlayingTrack();
+    var id = trackId || (t && t.id) || "";
     return isFav(id);
   };
 
   window.MEGANE_MUSIC_V7_TOGGLE_FAVORITE = function(trackId){
-    var id = trackId || (currentTrack() && currentTrack().id) || "";
+    var t = actualPlayingTrack();
+    var id = trackId || (t && t.id) || "";
     if(!id) return false;
     toggleFav(id);
     try{ render(); }catch(_){}

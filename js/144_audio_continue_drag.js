@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production6
+/* 144_audio_continue_drag.js production7
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -376,13 +376,30 @@
     document.body.appendChild(bar);
 
     var fav=bar.querySelector(".mp144-fav");
-    fav.addEventListener("pointerdown",function(e){ e.stopPropagation(); },true);
-    fav.addEventListener("click",function(e){
-      e.preventDefault();
-      e.stopPropagation();
+    var favHandledAt=0;
+
+    function activateFavorite(e){
+      var now=Date.now();
+      if(now-favHandledAt<450){
+        if(e){ e.preventDefault(); e.stopPropagation(); }
+        return;
+      }
+      favHandledAt=now;
+      if(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      }
       toggleFavorite();
       renderBar();
+    }
+
+    fav.addEventListener("pointerdown",function(e){
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
     },true);
+    fav.addEventListener("touchend",activateFavorite,{capture:true,passive:false});
+    fav.addEventListener("click",activateFavorite,true);
 
     var toggle=bar.querySelector(".mp144-toggle");
     toggle.addEventListener("pointerdown",function(e){ e.stopPropagation(); },true);
@@ -695,6 +712,13 @@
       // 25_conference_player_solid.js の700ms同期にsrcを戻されないよう、
       // 先に選択中Conferenceを保存済み回へ合わせる。
       setConferenceStoryById(saved.storyId || saved.id || "");
+    }else if(saved.type==="music"){
+      // 音だけ保存曲、表示だけ別曲になるのを防ぐ。
+      try{
+        if(typeof window.MEGANE_MUSIC_V7_SYNC_TO_SRC==="function"){
+          window.MEGANE_MUSIC_V7_SYNC_TO_SRC(saved.src || "");
+        }
+      }catch(_){}
     }
 
     try{
