@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production4
+/* 144_audio_continue_drag.js production5
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -150,13 +150,9 @@
     var ma=musicAudio();
     var ca=confAudio();
 
-    // 最後にplayイベントを出したaudioを最優先。
-    if(activeAudio && isAudioUsable(activeAudio) && !activeAudio.ended){
-      if(!activeAudio.paused){
-        return {audio:activeAudio,type:activeType || audioTypeOf(activeAudio)};
-      }
+    if(activeAudio && isAudioUsable(activeAudio) && !activeAudio.paused && !activeAudio.ended){
+      return {audio:activeAudio,type:activeType || audioTypeOf(activeAudio)};
     }
-
     if(isAudioUsable(ma) && !ma.paused && !ma.ended){
       return {audio:ma,type:"music"};
     }
@@ -164,22 +160,23 @@
       return {audio:ca,type:"conference"};
     }
 
-    if(activeAudio && isAudioUsable(activeAudio)){
-      return {audio:activeAudio,type:activeType || audioTypeOf(activeAudio)};
-    }
-
+    // 復帰時は、画面に残っている古いaudioではなく
+    // 最後に実際に再生して保存した種類を優先する。
     var saved=readJSON(STORE,null);
     if(saved){
-      if(saved.type==="conference" && isAudioUsable(ca)){
-        return {audio:ca,type:"conference"};
-      }
       if(saved.type==="music" && isAudioUsable(ma)){
         return {audio:ma,type:"music"};
       }
+      if(saved.type==="conference" && isAudioUsable(ca)){
+        return {audio:ca,type:"conference"};
+      }
     }
 
-    if(isAudioUsable(ca)) return {audio:ca,type:"conference"};
+    if(activeAudio && isAudioUsable(activeAudio)){
+      return {audio:activeAudio,type:activeType || audioTypeOf(activeAudio)};
+    }
     if(isAudioUsable(ma)) return {audio:ma,type:"music"};
+    if(isAudioUsable(ca)) return {audio:ca,type:"conference"};
     return null;
   }
 
@@ -595,27 +592,46 @@
     activeType=saved.type;
 
     try{
-      var current=a.currentSrc || a.src || a.getAttribute("src") || "";
-      if(saved.src && (!current || current!==saved.src)){
+      var current=absUrl(a.currentSrc || a.src || a.getAttribute("src") || "");
+      var target=absUrl(saved.src || "");
+
+      if(target && current!==target){
+        a.pause();
         a.src=saved.src;
         a.load();
       }
 
+      var resumed=false;
       var playNow=function(){
+        if(resumed) return;
+        resumed=true;
+
         try{
-          if(saved.time>0 && Math.abs((a.currentTime||0)-saved.time)>2){
-            a.currentTime=saved.time;
+          var maxTime=Number.isFinite(a.duration) && a.duration>0
+            ? Math.max(0,a.duration-.2)
+            : Number(saved.time || 0);
+          var wanted=Math.max(0,Math.min(Number(saved.time || 0),maxTime));
+
+          if(wanted>0 && Math.abs((a.currentTime||0)-wanted)>.75){
+            a.currentTime=wanted;
           }
         }catch(_){}
+
         try{
           var p=a.play();
           if(p && p.catch) p.catch(function(){});
         }catch(_){}
+
         renderBar();
       };
 
-      if(a.readyState>=1) playNow();
-      else a.addEventListener("loadedmetadata",playNow,{once:true});
+      if(a.readyState>=1){
+        playNow();
+      }else{
+        a.addEventListener("loadedmetadata",playNow,{once:true});
+        setTimeout(playNow,900);
+      }
+
       return true;
     }catch(_){
       return false;
@@ -687,14 +703,22 @@
       });
     });
 
-    ["pause","ended","loadedmetadata"].forEach(function(ev){
+    ["pause","ended"].forEach(function(ev){
       a.addEventListener(ev,function(){
-        if(isAudioUsable(a)) save(a,type,true);
+        // 現在操作中のaudioだけ保存する。
+        if(activeAudio===a && isAudioUsable(a)) save(a,type,true);
         var bar=q(BAR_ID); if(bar && !bar.hidden) renderBar();
       });
     });
 
+    a.addEventListener("loadedmetadata",function(){
+      // metadata読込だけで最後の音声を上書きしない。
+      var bar=q(BAR_ID);
+      if(bar && !bar.hidden && activeAudio===a) renderBar();
+    });
+
     a.addEventListener("timeupdate",function(){
+      if(a.paused || a.ended) return;
       activeAudio=a;
       activeType=type;
       save(a,type,false);
@@ -724,10 +748,16 @@
       return;
     }
 
-    if(e.type==="pause" || e.type==="ended" || e.type==="loadedmetadata"){
+    if((e.type==="pause" || e.type==="ended") && activeAudio===a){
       if(isAudioUsable(a)) save(a,type,true);
       var visibleBar=q(BAR_ID);
       if(visibleBar && !visibleBar.hidden) renderBar();
+      return;
+    }
+
+    if(e.type==="loadedmetadata"){
+      var metaBar=q(BAR_ID);
+      if(metaBar && !metaBar.hidden && activeAudio===a) renderBar();
     }
   }
 
@@ -828,40 +858,44 @@
     // 長押し後に生成されるghost click / 99側の重複clickを遮断。
     window.addEventListener("click",blockGhostActivation,true);
 
+    function saveBeforeBackground(){
+      if(activeAudio && isAudioUsable(activeAudio)){
+        save(activeAudio,activeType || audioTypeOf(activeAudio),true);
+      }
+    }
+
     function resumeUI(){
       bindAudios();
 
-      var found=detectAudio();
-      if(found){
-        activeAudio=found.audio;
-        activeType=found.type;
-        save(found.audio,found.type,true);
+      // 復帰時は保存済みの種類を正とし、
+      // idle状態のConference audioなどで上書きしない。
+      var saved=readJSON(STORE,null);
+      if(saved){
+        activeType=saved.type;
+        activeAudio=saved.type==="music" ? musicAudio() : confAudio();
+      }else{
+        var found=detectAudio();
+        if(found){
+          activeAudio=found.audio;
+          activeType=found.type;
+        }
       }
 
-      // Safari内ブラウザや外部検索から復帰した時も、
-      // 前回表示中なら同じ位置へ復元する。
       if(readUI().visible){
         requestAnimationFrame(function(){ restoreVisibility(); });
         setTimeout(restoreVisibility,120);
       }
     }
 
+    window.addEventListener("pagehide",saveBeforeBackground);
+    window.addEventListener("blur",saveBeforeBackground);
     window.addEventListener("pageshow",resumeUI);
     window.addEventListener("focus",resumeUI);
 
     document.addEventListener("visibilitychange",function(){
-      if(!document.hidden) resumeUI();
+      if(document.hidden) saveBeforeBackground();
+      else resumeUI();
     });
-
-    window.addEventListener("resize",function(){
-      var bar=q(BAR_ID);
-      if(!bar || bar.hidden) return;
-      var r=bar.getBoundingClientRect();
-      var c=clampPosition(bar,r.left,r.top);
-      bar.style.left=c.x+"px";
-      bar.style.top=c.y+"px";
-      savePosition(bar,{visible:true});
-    },{passive:true});
 
     if(window.visualViewport){
       window.visualViewport.addEventListener("resize",function(){
