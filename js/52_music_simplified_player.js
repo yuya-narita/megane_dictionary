@@ -515,12 +515,17 @@
   function switchToAlbum(i){
     var lockAlbum = albums()[i];
     if(musicAlbumLocked(lockAlbum)){ showMusicUnlockHint(lockAlbum); return; }
-    // アルバムを開くだけでは再生中の曲を止めない。
-    // お気に入り曲から通常アルバムへ移動した時は、
-    // favorites の表示判定が残らないよう album閲覧へ明示的に戻す。
+
+    // production144:
+    // 再生中のアルバムを開き直した時は、表示も現在再生中の曲へ同期する。
+    // 別アルバムを閲覧する時だけ1曲目を表示する。
+    var reopenPlayingAlbum =
+      state.queueMode === "album" &&
+      state.album === i;
+
     state.queueMode = "album";
     state.browsingAlbum = i;
-    state.browsingTrack = 0;
+    state.browsingTrack = reopenPlayingAlbum ? state.track : 0;
     state.screen = "player";
     state.sheet = false;
     state.lyrics = false;
@@ -1299,6 +1304,49 @@
 
     render();
     restoreSheetScroll();
+  };
+
+  // production144 bridge: 軽量ミニプレイヤー用の読み取り・操作API
+  window.MEGANE_MUSIC_V7_NOW = function(){
+    var t = currentTrack();
+    var a = currentAlbum();
+    var info = parseTitle(t, state.track || 0);
+    var au = audio();
+    return {
+      type: "music",
+      title: info.title || (t && t.title) || "MEGANE MUSIC",
+      subtitle: (a && (a._originTitle || a.title)) || "Music",
+      artwork: (t && t.cover) || (a && a.cover) || "",
+      src: au ? (au.currentSrc || au.src || "") : "",
+      time: au ? Number(au.currentTime || 0) : 0,
+      paused: au ? !!au.paused : true
+    };
+  };
+
+  window.MEGANE_MUSIC_V7_TOGGLE_CURRENT = function(){
+    var au = audio();
+    if(!au) return false;
+    setAudioForCurrent(false);
+    try{
+      if(!au.paused){
+        au.pause();
+      }else{
+        var p = au.play();
+        if(p && p.catch) p.catch(function(){});
+      }
+      return true;
+    }catch(_){
+      return false;
+    }
+  };
+
+  window.MEGANE_MUSIC_V7_OPEN_CURRENT = function(){
+    state.browsingAlbum = state.album;
+    state.browsingTrack = state.track;
+    state.screen = "player";
+    state.sheet = false;
+    state.lyrics = false;
+    render();
   };
 
   window.MEGANE_MUSIC_V7_OPEN_ALBUMS = function(){ state.screen = "albums"; state.sheet = false; state.lyrics = false; render(); };
