@@ -1276,10 +1276,9 @@
   window.MEGANE_MUSIC_V7_RENDER = render;
   window.MEGANE_MUSIC_V7_OPEN_FAVORITES = switchToFavorites;
 
-  /* Production 143 bridge:
-     下部中央★から、実際の megane_music_v7_favs を使う
-     「保護しました♪」曲一覧を直接開く。
-     現在再生中の曲・アルバム・queueModeは変更しない。 */
+  // production143:
+  // 実際の megane_music_v7_favs を使う保護曲一覧を直接開く。
+  // 再生中の album / track / queueMode は変更しない。
   window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST = function(){
     var keepAlbum = state.album;
     var keepTrack = state.track;
@@ -1298,7 +1297,6 @@
     state.track = keepTrack;
     state.queueMode = keepQueue || "album";
 
-    saveState();
     render();
     restoreSheetScroll();
   };

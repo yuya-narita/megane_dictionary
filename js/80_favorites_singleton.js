@@ -483,9 +483,20 @@
   }
 
   function onOpen(e){
-    const btn=e.target && e.target.closest ? e.target.closest("#randomWord,#favoriteListOpen") : null;
+    const btn=e.target && e.target.closest ? e.target.closest("#randomWord,#randomWordFixed,#favoriteListOpen") : null;
     if(!btn) return;
     try { if(document.body.classList.contains("mode-cards")) return; } catch(_) {}
+
+    // production143:
+    // 音楽・会議では辞書お気に入りを開かず、
+    // モード専用のお気に入り処理へ委譲する。
+    try{
+      if(typeof window.MEGANE_MODE_FAVORITES_OPEN === "function"){
+        const handled = window.MEGANE_MODE_FAVORITES_OPEN(e);
+        if(handled === true) return false;
+      }
+    }catch(_){}
+
     return openFavorites(e);
   }
 
