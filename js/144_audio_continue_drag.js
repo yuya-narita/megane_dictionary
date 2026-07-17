@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production8
+/* 144_audio_continue_drag.js production9
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -301,7 +301,8 @@
         position:fixed;
         left:46px;
         top:calc(100dvh - 230px);
-        z-index:8990;
+        z-index:2147483000 !important;
+        isolation:isolate;
         width:min(86vw,390px);
         height:62px;
         box-sizing:border-box;
@@ -394,6 +395,11 @@
       '<button type="button" class="mp144-toggle" aria-label="再生">▶</button>';
 
     document.body.appendChild(bar);
+
+    // 音楽モードの上部ナビ／プレイヤーが高いstacking layerを持つため、
+    // inline styleでも最前面を保証する。
+    bar.style.setProperty("z-index","2147483000","important");
+    bar.style.setProperty("isolation","isolate");
 
     var fav=bar.querySelector(".mp144-fav");
     var favHandledAt=0;
@@ -685,6 +691,8 @@
     if(!renderBar()) return false;
 
     writeUI({visible:true});
+    bar.style.setProperty("z-index","2147483000","important");
+    bar.style.setProperty("isolation","isolate");
     bar.classList.remove("mp144-hide");
     bar.hidden=false;
     restorePosition(bar);
