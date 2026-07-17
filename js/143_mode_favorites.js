@@ -1,79 +1,52 @@
-/* 143_mode_favorites.js v3
- * - 音楽中央★：保護した曲一覧を直接開く
- * - 勝手に「保護しました♪」プレイヤーへ移動しない
- * - 会議中央★：お気に入り会議一覧
- * - 会議一覧は左スワイプ削除
- * - 辞書お気に入りとの二重表示を遮断
+/* 143_mode_favorites_production.js
+ * mvp_last 本番専用
+ *
+ * 下部中央ボタン:
+ * - 辞書: 既存のお気に入り単語
+ * - カード: 既存のカードバインダー
+ * - 音楽: 実データ megane_music_v7_favs の「保護しました♪」一覧
+ * - 会議: 実データ megane_conf_favorites のお気に入り会議一覧
+ *
+ * 80_favorites_singleton / 99_nav_real_fix の旧イベントを
+ * 中央ボタンの安全なcloneで無効化する。
  */
-(() => {
+(function(){
   "use strict";
 
-  const STYLE_ID = "modeFavorites143StyleV3";
-  const DIALOG_ID = "modeFavorites143Dialog";
-  const LIST_ID = "modeFavorites143List";
-  const CONF_FAV_KEY = "megane_conf_favorites";
-
-  let clickLock = false;
+  var CONF_KEY = "megane_conf_favorites";
+  var DIALOG_ID = "productionConfFavorites143";
+  var LIST_ID = "productionConfFavorites143List";
+  var STYLE_ID = "productionConfFavorites143Style";
+  var reboundTimer = 0;
 
   function q(id){ return document.getElementById(id); }
 
   function mode(){
-    const b = document.body;
-    if(b.classList.contains("mode-music")) return "music";
-    if(b.classList.contains("mode-cards")) return "cards";
-    if(
-      b.classList.contains("mode-manga") ||
-      b.classList.contains("mode-conf") ||
-      b.classList.contains("mode-conference")
-    ) return "conf";
+    try{
+      if(document.body.classList.contains("mode-cards")) return "cards";
+      if(document.body.classList.contains("mode-music")) return "music";
+      if(document.body.classList.contains("mode-manga") ||
+         document.body.classList.contains("mode-conf")) return "conf";
+      if(typeof appMode !== "undefined" && appMode === "cards") return "cards";
+      if(typeof appMode !== "undefined" && appMode === "manga") return "conf";
+    }catch(_){}
     return "dictionary";
   }
 
-  function centerButtonFrom(target){
-    return target && target.closest
-      ? target.closest("#randomWord,#randomWordFixed")
-      : null;
+  function stop(e){
+    if(!e) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
   }
 
-  function closeDictionaryFavorites(){
-    const dlg = q("favoriteDialog");
-    if(!dlg) return;
-    try{
-      if(dlg.open && typeof dlg.close === "function") dlg.close();
-      else dlg.removeAttribute("open");
-    }catch(_){
-      dlg.removeAttribute("open");
-    }
+  function readMap(key){
+    try{ return JSON.parse(localStorage.getItem(key) || "{}") || {}; }
+    catch(_){ return {}; }
   }
 
-  function readConfFavs(){
-    try{
-      return JSON.parse(localStorage.getItem(CONF_FAV_KEY) || "{}");
-    }catch(_){
-      return {};
-    }
-  }
-
-  function isConfFavorite(store,id){
-    if(Array.isArray(store)) return store.includes(id);
-    return !!(store && store[id]);
-  }
-
-  function removeConfFavorite(id){
-    const store = readConfFavs();
-
-    if(Array.isArray(store)){
-      localStorage.setItem(
-        CONF_FAV_KEY,
-        JSON.stringify(store.filter(x => x !== id))
-      );
-      return;
-    }
-
-    if(store && typeof store === "object"){
-      delete store[id];
-      localStorage.setItem(CONF_FAV_KEY,JSON.stringify(store));
-    }
+  function writeMap(key,value){
+    try{ localStorage.setItem(key,JSON.stringify(value)); }catch(_){}
   }
 
   function stories(){
@@ -92,20 +65,36 @@
       .replace(/"/g,"&quot;");
   }
 
-  function conferenceNumber(story,index){
-    for(const value of [story && story.no,story && story.number,story && story.id]){
-      const m = String(value || "").match(/(\d{1,4})/);
+  function confNo(story,index){
+    var values = [
+      story && story.no,
+      story && story.number,
+      story && story.id,
+      story && story.title
+    ];
+    for(var i=0;i<values.length;i++){
+      var m = String(values[i] || "").match(/(?:conf[_-]?|#)?(\d{1,4})/i);
       if(m) return String(Number(m[1])).padStart(3,"0");
     }
     return String(index + 1).padStart(3,"0");
   }
 
+  function closeDictionaryDialog(){
+    var d = q("favoriteDialog");
+    if(!d) return;
+    try{
+      if(d.open && typeof d.close === "function") d.close();
+      else d.removeAttribute("open");
+    }catch(_){
+      d.removeAttribute("open");
+    }
+  }
+
   function ensureStyle(){
     if(q(STYLE_ID)) return;
-
-    const st = document.createElement("style");
-    st.id = STYLE_ID;
-    st.textContent = `
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `
       #${DIALOG_ID}{
         width:min(92vw,560px);
         max-height:76dvh;
@@ -119,35 +108,19 @@
         backdrop-filter:blur(18px);
         overflow:hidden;
       }
-
-      #${DIALOG_ID}::backdrop{
-        background:rgba(0,0,0,.62);
-      }
-
-      .mf143-head{
+      #${DIALOG_ID}::backdrop{background:rgba(0,0,0,.62)}
+      .p143-head{
         display:flex;
         align-items:center;
         justify-content:space-between;
         gap:12px;
         padding:20px 22px 14px;
       }
-
-      .mf143-head strong{
-        font-size:23px;
-        letter-spacing:.02em;
+      .p143-head strong{font-size:23px;letter-spacing:.02em}
+      .p143-close{
+        width:42px;height:42px;border:0;border-radius:50%;
+        background:transparent;color:#fff;font-size:25px;font-weight:900;
       }
-
-      .mf143-close{
-        width:42px;
-        height:42px;
-        border:0;
-        border-radius:50%;
-        background:transparent;
-        color:#fff;
-        font-size:25px;
-        font-weight:900;
-      }
-
       #${LIST_ID}{
         display:grid;
         gap:12px;
@@ -156,43 +129,34 @@
         padding:8px 20px 24px;
         -webkit-overflow-scrolling:touch;
       }
-
-      .mf143-row-wrap{
+      .p143-wrap{
         position:relative;
         overflow:hidden;
         border-radius:22px;
-        background:rgba(210,45,55,.78);
+        background:#b93643;
       }
-
-      .mf143-delete-bg{
+      .p143-delete{
         position:absolute;
-        right:0;
-        top:0;
-        bottom:0;
-        width:92px;
+        right:0;top:0;bottom:0;
+        width:88px;
         display:grid;
         place-items:center;
-        color:#fff;
         font-size:13px;
         font-weight:900;
         opacity:0;
         transition:opacity .08s linear;
         pointer-events:none;
       }
-
-      .mf143-row-wrap.swiping .mf143-delete-bg{
-        opacity:1;
-      }
-
-      .mf143-row{
+      .p143-wrap.swiping .p143-delete{opacity:1}
+      .p143-row{
         position:relative;
         z-index:1;
         width:100%;
+        min-height:96px;
         display:grid;
         grid-template-columns:76px minmax(0,1fr);
         align-items:center;
         gap:14px;
-        min-height:96px;
         padding:12px;
         border:1px solid rgba(255,255,255,.12);
         border-radius:22px;
@@ -205,80 +169,46 @@
         user-select:none;
         -webkit-user-select:none;
       }
-
-      .mf143-row.dragging{
-        transition:none;
+      .p143-row.dragging{transition:none}
+      .p143-row.removing{transform:translateX(-120%);opacity:0}
+      .p143-thumb{
+        width:76px;height:76px;border-radius:15px;
+        overflow:hidden;background:rgba(255,255,255,.06);
       }
-
-      .mf143-row.removing{
-        transform:translateX(-120%);
-        opacity:0;
-      }
-
-      .mf143-thumb{
-        width:76px;
-        height:76px;
-        border-radius:15px;
-        overflow:hidden;
-        background:rgba(255,255,255,.06);
-      }
-
-      .mf143-thumb img{
-        width:100%;
-        height:100%;
-        display:block;
-        object-fit:cover;
-      }
-
-      .mf143-meta{
-        min-width:0;
-        display:grid;
-        gap:7px;
-      }
-
-      .mf143-title{
-        font-size:17px;
-        font-weight:900;
-        line-height:1.35;
-      }
-
-      .mf143-sub{
-        font-size:13px;
-        font-weight:700;
-        color:rgba(255,255,255,.58);
-      }
-
-      .mf143-empty{
+      .p143-thumb img{width:100%;height:100%;display:block;object-fit:cover}
+      .p143-meta{min-width:0;display:grid;gap:7px}
+      .p143-title{font-size:17px;font-weight:900;line-height:1.35}
+      .p143-sub{font-size:13px;font-weight:700;color:rgba(255,255,255,.58)}
+      .p143-empty{
         padding:36px 14px 46px;
         text-align:center;
         color:rgba(255,255,255,.62);
         font-weight:800;
       }
     `;
-    document.head.appendChild(st);
+    document.head.appendChild(style);
   }
 
   function ensureDialog(){
-    let dlg = q(DIALOG_ID);
+    var dlg = q(DIALOG_ID);
     if(dlg) return dlg;
 
     dlg = document.createElement("dialog");
     dlg.id = DIALOG_ID;
-    dlg.innerHTML = `
-      <div class="mf143-head">
-        <strong>お気に入り会議</strong>
-        <button type="button" class="mf143-close" aria-label="閉じる">×</button>
-      </div>
-      <div id="${LIST_ID}"></div>
-    `;
+    dlg.innerHTML =
+      '<div class="p143-head">'+
+        '<strong>お気に入り会議</strong>'+
+        '<button type="button" class="p143-close" aria-label="閉じる">×</button>'+
+      '</div>'+
+      '<div id="'+LIST_ID+'"></div>';
 
     document.body.appendChild(dlg);
 
-    dlg.querySelector(".mf143-close").addEventListener("click",() => {
+    dlg.querySelector(".p143-close").addEventListener("click",function(){
       try{ dlg.close(); }catch(_){ dlg.removeAttribute("open"); }
     });
 
-    dlg.addEventListener("click",e => {
+    dlg.addEventListener("click",function(e){
       if(e.target === dlg){
         try{ dlg.close(); }catch(_){ dlg.removeAttribute("open"); }
       }
@@ -287,25 +217,35 @@
     return dlg;
   }
 
-  function openConferenceByIndex(index){
-    const story = stories()[index];
-    if(!story) return;
+  function removeConfFavorite(id){
+    var map = readMap(CONF_KEY);
+    delete map[id];
+    writeMap(CONF_KEY,map);
 
     try{
-      window.selectedMangaIndex = index;
-      window.mangaStoryIndex = index;
-      window.mangaPageIndex = 0;
-      window.mangaReadMode = "page";
-      window.mangaState = "reader";
-      window.appMode = "manga";
+      document.querySelectorAll(".manga-item").forEach(function(item){
+        var idx = Number(item.dataset.index || 0);
+        var story = stories()[idx];
+        if(story && story.id === id){
+          item.classList.remove("conf-min-fav","conf-favorited");
+        }
+      });
     }catch(_){}
+  }
 
-    try { if(typeof selectedMangaIndex !== "undefined") selectedMangaIndex = index; } catch(_){}
-    try { if(typeof mangaStoryIndex !== "undefined") mangaStoryIndex = index; } catch(_){}
-    try { if(typeof mangaPageIndex !== "undefined") mangaPageIndex = 0; } catch(_){}
-    try { if(typeof mangaReadMode !== "undefined") mangaReadMode = "page"; } catch(_){}
-    try { if(typeof mangaState !== "undefined") mangaState = "reader"; } catch(_){}
-    try { if(typeof appMode !== "undefined") appMode = "manga"; } catch(_){}
+  function openConfByIndex(index){
+    var data = stories();
+    if(!data[index]) return;
+
+    try{
+      selectedMangaIndex = index;
+      mangaStoryIndex = index;
+      mangaPageIndex = 0;
+      mangaReadMode = "page";
+      mangaState = "reader";
+      appMode = "manga";
+      localStorage.setItem("megane_current_conference_id",data[index].id || "");
+    }catch(_){}
 
     try{
       if(typeof window.setMode === "function") window.setMode("manga");
@@ -315,141 +255,111 @@
     }catch(_){}
   }
 
-  function bindSwipe(wrapper,row,storyId,index){
-    let startX = 0;
-    let startY = 0;
-    let dx = 0;
-    let horizontal = false;
-    let suppressClick = false;
+  function bindSwipe(wrap,row,id,index){
+    var sx=0, sy=0, dx=0, horizontal=false, suppress=false;
 
-    row.addEventListener("touchstart",e => {
-      const t = e.touches && e.touches[0];
+    row.addEventListener("touchstart",function(e){
+      var t=e.touches && e.touches[0];
       if(!t) return;
-      startX = t.clientX;
-      startY = t.clientY;
-      dx = 0;
-      horizontal = false;
+      sx=t.clientX; sy=t.clientY; dx=0; horizontal=false; suppress=false;
       row.classList.add("dragging");
     },{passive:true});
 
-    row.addEventListener("touchmove",e => {
-      const t = e.touches && e.touches[0];
+    row.addEventListener("touchmove",function(e){
+      var t=e.touches && e.touches[0];
       if(!t) return;
-
-      const nextX = t.clientX - startX;
-      const nextY = t.clientY - startY;
+      var nx=t.clientX-sx;
+      var ny=t.clientY-sy;
 
       if(!horizontal){
-        horizontal =
-          Math.abs(nextX) > 10 &&
-          Math.abs(nextX) > Math.abs(nextY) * 1.15;
+        horizontal=Math.abs(nx)>10 && Math.abs(nx)>Math.abs(ny)*1.15;
       }
-
       if(!horizontal) return;
 
       e.preventDefault();
-      dx = Math.min(0,Math.max(-125,nextX));
-      suppressClick = Math.abs(dx) > 8;
-      wrapper.classList.add("swiping");
-      row.style.transform = `translateX(${dx}px)`;
+      dx=Math.min(0,Math.max(-118,nx));
+      suppress=Math.abs(dx)>8;
+      wrap.classList.add("swiping");
+      row.style.transform="translateX("+dx+"px)";
     },{passive:false});
 
-    row.addEventListener("touchend",() => {
+    row.addEventListener("touchend",function(){
       row.classList.remove("dragging");
 
-      if(horizontal && dx <= -82){
+      if(horizontal && dx<=-80){
         row.classList.add("removing");
-        window.setTimeout(() => {
-          removeConfFavorite(storyId);
-          wrapper.remove();
-
-          const list = q(LIST_ID);
-          if(list && !list.querySelector(".mf143-row-wrap")){
-            list.innerHTML =
-              `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
+        setTimeout(function(){
+          removeConfFavorite(id);
+          wrap.remove();
+          var list=q(LIST_ID);
+          if(list && !list.querySelector(".p143-wrap")){
+            list.innerHTML='<div class="p143-empty">まだお気に入り会議はありません。</div>';
           }
         },180);
       }else{
-        row.style.transform = "";
-        wrapper.classList.remove("swiping");
+        row.style.transform="";
+        wrap.classList.remove("swiping");
       }
 
-      window.setTimeout(() => {
-        horizontal = false;
-        suppressClick = false;
-      },180);
+      setTimeout(function(){horizontal=false;suppress=false;},180);
     },{passive:true});
 
-    row.addEventListener("click",e => {
-      if(suppressClick){
-        e.preventDefault();
-        e.stopPropagation();
-        return;
+    row.addEventListener("click",function(e){
+      if(suppress){
+        stop(e);
+        return false;
       }
-
-      const dlg = q(DIALOG_ID);
-      try{ dlg && dlg.close(); }catch(_){}
-      openConferenceByIndex(index);
+      var dlg=q(DIALOG_ID);
+      try{ if(dlg) dlg.close(); }catch(_){}
+      openConfByIndex(index);
     });
   }
 
   function openConferenceFavorites(){
-    closeDictionaryFavorites();
+    closeDictionaryDialog();
 
-    const dlg = ensureDialog();
-    const list = q(LIST_ID);
-    const store = readConfFavs();
+    var dlg=ensureDialog();
+    var list=q(LIST_ID);
+    var map=readMap(CONF_KEY);
+    var data=stories();
+    var rows=[];
 
-    const rows = stories()
-      .map((story,index) => ({story,index}))
-      .filter(x =>
-        x.story &&
-        x.story.id &&
-        isConfFavorite(store,x.story.id)
-      );
+    data.forEach(function(story,index){
+      if(story && story.id && map[story.id]) rows.push({story:story,index:index});
+    });
 
     if(!rows.length){
-      list.innerHTML =
-        `<div class="mf143-empty">まだお気に入り会議はありません。</div>`;
+      list.innerHTML='<div class="p143-empty">まだお気に入り会議はありません。</div>';
     }else{
-      list.innerHTML = rows.map(({story,index}) => `
-        <div class="mf143-row-wrap">
-          <div class="mf143-delete-bg">削除</div>
-          <button
-            type="button"
-            class="mf143-row"
-            data-conf-id="${esc(story.id)}"
-            data-conf-index="${index}"
-          >
-            <span class="mf143-thumb">
-              ${story.thumb ? `<img src="${esc(story.thumb)}" alt="">` : ""}
-            </span>
-            <span class="mf143-meta">
-              <span class="mf143-title">
-                🎙 ${esc(String(story.title || "").replace(/^🎙️?\s*/,""))}
-              </span>
-              <span class="mf143-sub">
-                Syntax Conference｜#${conferenceNumber(story,index)}
-              </span>
-            </span>
-          </button>
-        </div>
-      `).join("");
+      list.innerHTML=rows.map(function(x){
+        var story=x.story;
+        var title=String(story.title || ("Conference "+(x.index+1))).replace(/^🎙️?\s*/,"");
+        return ''+
+          '<div class="p143-wrap">'+
+            '<div class="p143-delete">削除</div>'+
+            '<button type="button" class="p143-row" data-id="'+esc(story.id)+'" data-index="'+x.index+'">'+
+              '<span class="p143-thumb">'+(story.thumb?'<img src="'+esc(story.thumb)+'" alt="">':'')+'</span>'+
+              '<span class="p143-meta">'+
+                '<span class="p143-title">🎙 '+esc(title)+'</span>'+
+                '<span class="p143-sub">Syntax Conference｜#'+confNo(story,x.index)+'</span>'+
+              '</span>'+
+            '</button>'+
+          '</div>';
+      }).join("");
 
-      list.querySelectorAll(".mf143-row-wrap").forEach(wrapper => {
-        const row = wrapper.querySelector(".mf143-row");
-        if(!row) return;
+      list.querySelectorAll(".p143-wrap").forEach(function(wrap){
+        var row=wrap.querySelector(".p143-row");
         bindSwipe(
-          wrapper,
+          wrap,
           row,
-          row.dataset.confId,
-          Number(row.dataset.confIndex || 0)
+          row.dataset.id,
+          Number(row.dataset.index || 0)
         );
       });
     }
 
     try{
-      if(typeof dlg.showModal === "function" && !dlg.open) dlg.showModal();
+      if(dlg.showModal && !dlg.open) dlg.showModal();
       else dlg.setAttribute("open","");
     }catch(_){
       dlg.setAttribute("open","");
@@ -457,96 +367,141 @@
   }
 
   function openMusicFavorites(){
-    closeDictionaryFavorites();
-
+    closeDictionaryDialog();
     if(typeof window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST === "function"){
       window.MEGANE_MUSIC_V7_OPEN_FAVORITES_LIST();
-      return true;
+      return;
     }
-
-    return false;
+    if(typeof window.MEGANE_MUSIC_V7_OPEN_FAVORITES === "function"){
+      window.MEGANE_MUSIC_V7_OPEN_FAVORITES();
+    }
   }
 
-  function blockStart(e){
-    if(!centerButtonFrom(e.target)) return;
-    const current = mode();
-    if(current !== "music" && current !== "conf") return;
+  function openDictionaryFavorites(e){
+    if(window.MEGANE_FAVORITES_SINGLETON &&
+       typeof window.MEGANE_FAVORITES_SINGLETON.open === "function"){
+      return window.MEGANE_FAVORITES_SINGLETON.open(e);
+    }
+    var d=q("favoriteDialog");
+    if(d){
+      try{ if(d.showModal && !d.open) d.showModal(); else d.setAttribute("open",""); }
+      catch(_){ d.setAttribute("open",""); }
+    }
+  }
 
-    // 既存のお気に入り処理へイベントを渡さない。
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+  function openBinder(){
+    var m=q("binderModal");
+    if(!m) return;
+    try{ if(typeof window.renderBinder === "function") window.renderBinder(); }catch(_){}
+    m.style.display="block";
   }
 
   function activate(e){
-    if(!centerButtonFrom(e.target)) return;
-
-    const current = mode();
-    if(current !== "music" && current !== "conf") return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-
-    if(clickLock) return;
-    clickLock = true;
-
-    if(current === "music"){
-      openMusicFavorites();
-    }else{
-      openConferenceFavorites();
-    }
-
-    window.setTimeout(() => { clickLock = false; },260);
+    stop(e);
+    var m=mode();
+    if(m==="music") openMusicFavorites();
+    else if(m==="conf") openConferenceFavorites();
+    else if(m==="cards") openBinder();
+    else openDictionaryFavorites(e);
+    return false;
   }
 
-  function updateLabel(){
-    const btn = q("randomWord") || q("randomWordFixed");
+  function bindCenter(){
+    var old=q("randomWord");
+    if(!old || old.dataset.production143Bound==="1") return;
+
+    var clone=old.cloneNode(true);
+
+    // 80_favorites_singleton / 99_nav_real_fix が再上書きしない印。
+    clone.dataset.production143Bound="1";
+    clone.dataset.singletonCloned="1";
+    clone.dataset.singletonOverride="1";
+    clone.dataset.v6Favorite="1";
+    clone.dataset.v6Binder="1";
+
+    clone.onclick=null;
+    clone.ontouchend=null;
+    clone.onpointerup=null;
+    clone.onpointerdown=null;
+
+    old.parentNode.replaceChild(clone,old);
+
+    clone.addEventListener("pointerdown",function(e){
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    },true);
+
+    clone.addEventListener("touchstart",function(e){
+      e.stopPropagation();
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    },{capture:true,passive:true});
+
+    clone.addEventListener("click",activate,true);
+
+    updateCenter();
+  }
+
+  function updateCenter(){
+    var btn=q("randomWord");
     if(!btn) return;
+    var m=mode();
 
-    const current = mode();
-
-    if(current === "music"){
-      btn.textContent = "★";
-      btn.title = "保護した曲";
+    if(m==="cards"){
+      btn.textContent="📘";
+      btn.setAttribute("aria-label","カードバインダー");
+      btn.title="カードバインダー";
+    }else if(m==="music"){
+      btn.textContent="★";
       btn.setAttribute("aria-label","保護した曲");
-    }else if(current === "conf"){
-      btn.textContent = "★";
-      btn.title = "お気に入り会議";
+      btn.title="保護した曲";
+    }else if(m==="conf"){
+      btn.textContent="★";
       btn.setAttribute("aria-label","お気に入り会議");
+      btn.title="お気に入り会議";
+    }else{
+      btn.textContent="★";
+      btn.setAttribute("aria-label","お気に入り単語");
+      btn.title="お気に入り単語";
     }
+  }
+
+  function scheduleRebind(){
+    clearTimeout(reboundTimer);
+    reboundTimer=setTimeout(function(){
+      var btn=q("randomWord");
+      if(!btn || btn.dataset.production143Bound!=="1") bindCenter();
+      else updateCenter();
+    },50);
   }
 
   function boot(){
     ensureStyle();
     ensureDialog();
 
-    // 開始イベントは伝播だけ止める。
-    // preventDefaultしないため、iPhoneでもclickは生成される。
-    window.addEventListener("pointerdown",blockStart,true);
-    window.addEventListener("touchstart",blockStart,{
-      capture:true,
-      passive:true
-    });
-    window.addEventListener("mousedown",blockStart,true);
+    // 80_favorites_singleton の初回clone後に本番143を確定。
+    setTimeout(bindCenter,1350);
+    setTimeout(bindCenter,1800);
 
-    // 実行はclick一回だけ。
-    window.addEventListener("click",activate,true);
-
-    new MutationObserver(() => {
-      requestAnimationFrame(updateLabel);
-    }).observe(document.body,{
+    new MutationObserver(scheduleRebind).observe(document.body,{
+      childList:true,
+      subtree:true,
       attributes:true,
       attributeFilter:["class"]
     });
 
-    document.addEventListener("click",() => {
-      window.setTimeout(updateLabel,60);
-    },true);
+    document.addEventListener("click",scheduleRebind,true);
+    document.addEventListener("touchend",scheduleRebind,true);
+    window.addEventListener("pageshow",scheduleRebind);
 
-    updateLabel();
+    // Singletonは1200ms周期なので、その直後だけ軽く確認。
+    setInterval(function(){
+      var btn=q("randomWord");
+      if(!btn || btn.dataset.production143Bound!=="1") bindCenter();
+      else updateCenter();
+    },1600);
   }
 
-  if(document.readyState === "loading"){
+  if(document.readyState==="loading"){
     document.addEventListener("DOMContentLoaded",boot,{once:true});
   }else{
     boot();
