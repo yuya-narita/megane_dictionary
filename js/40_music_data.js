@@ -7,7 +7,7 @@ const musicPlaylists = [
     "type": "album",
     "title": "詩の処方箋",
     "cover": "images/music/poem-cover.jpeg",
-    "desc": "静かに効くBGM",
+    "desc": "なぜ、私たちは言葉に跳ねるのだろう",
     "tracks": [
       {
         "id": "poem_01",
@@ -102,7 +102,7 @@ const musicPlaylists = [
         "title": "アセチルコリン ― 記憶が光る薬 ―",
         "audio": "music/poem/poem_12 アセチルコリン ― 記憶が光る薬 ―.mp3",
         "tag": "詩の処方箋",
-        "lyrics": "光が走る　神経の森を\n記憶がゆっくり　芽吹いていく\n\nアセチルコリン\n記憶が光る薬\n\n思い出はまだ　消えていない\n言葉の中で　呼吸している\n\n世界は　覚えている\n僕がここにいたことを\n\n\n",
+        "lyrics": "光が走る　神経の森を\n記憶がゆっくり　芽吹いていく\n\nアセチルコリン\n��憶が光る薬\n\n思い出はまだ　消えていない\n言葉の中で　呼吸している\n\n世界は　覚えている\n僕がここにいたことを\n\n\n",
         "cover": "images/music/poem_12.jpg"
       },
       {
@@ -626,7 +626,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_02",
-        "title": "動いたまま",
+        "title": "ニュートン力学のうた",
         "audio": "music/bug_song/bug_02_newtonian.mp3",
         "cover": "images/music/theory_02.png",
         "tag": "ニュートン",
@@ -634,7 +634,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_03",
-        "title": "同時じゃない",
+        "title": "相対性理論のうた",
         "audio": "music/bug_song/bug_03_relativity.mp3",
         "cover": "images/music/theory_03.png",
         "tag": "相対性理論",
@@ -642,7 +642,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_04",
-        "title": "まだ決まってない",
+        "title": "量子力学のうた",
         "audio": "music/bug_song/bug_04_quantum.mp3",
         "cover": "images/music/theory_04.png",
         "tag": "量子力学",
@@ -666,7 +666,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_25",
-        "title": "宇宙の熱的死 — 最後はぜんぶ同じ温度",
+        "title": "宇宙の熱的死 のうた",
         "audio": "music/bug_song/theory_25.mp3",
         "cover": "images/music/theory_25.png",
         "tag": "熱的死",
@@ -674,7 +674,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_31",
-        "title": "人間原理 — 観測できる宇宙にいる",
+        "title": "人間原理 のうた",
         "audio": "music/bug_song/theory_31.mp3",
         "cover": "images/music/theory_31.png",
         "tag": "カオス理論",
@@ -682,7 +682,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_28",
-        "title": "フェルミのパラドックス — みんなどこにいる？",
+        "title": "フェルミのパラドックス のうた",
         "audio": "music/bug_song/theory_28.mp3",
         "cover": "images/music/theory_28.png",
         "tag": "フェルミのパラドックス",
@@ -698,7 +698,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_19",
-        "title": "多世界解釈",
+        "title": "多世界解釈のうた",
         "audio": "music/bug_song/theory_19.mp3",
         "cover": "images/music/theory_19.png",
         "tag": "多世界解釈",
@@ -706,7 +706,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_24",
-        "title": "ボルツマン脳 — 宇宙で一瞬だけ生まれる「私」",
+        "title": "ボルツマン脳 のうた",
         "audio": "music/bug_song/theory_24.mp3",
         "cover": "images/music/theory_24.png",
         "tag": "ボルツマン脳",
@@ -731,7 +731,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_16",
-        "title": "テセウスの船",
+        "title": "テセウスの船のうた",
         "audio": "music/bug_song/same-ship-theseus-lullaby.mp3",
         "cover": "images/music/theory_16.png",
         "tag": "テセウスの船",
@@ -739,7 +739,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_15",
-        "title": "モンティ・ホール問題",
+        "title": "モンティ・ホール問題のうた",
         "audio": "music/bug_song/bug_song_three-doors-monty-madness .mp3",
         "cover": "images/music/theory_15.png",
         "tag": "モンティ・ホール問題",
@@ -747,7 +747,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_26",
-        "title": "ギャンブラーの誤謬",
+        "title": "ギャンブラーの誤謬のうた",
         "audio": "music/bug_song/theory_26.mp3",
         "cover": "images/music/theory_26.png",
         "tag": "ギャンブラーの誤謬",
@@ -763,7 +763,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_18",
-        "title": "白クマ効果",
+        "title": "白クマ効果のうた",
         "audio": "music/bug_song/dont-think-white-bear-song.mp3",
         "cover": "images/music/theory_18.png",
         "tag": "白クマ効果",
@@ -779,7 +779,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_17",
-        "title": "共有地の悲劇",
+        "title": "共有地の悲劇のうた",
         "audio": "music/bug_song/everyone_s-field-commons-song.mp3",
         "cover": "images/music/theory_17.png",
         "tag": "共有地の悲劇",
@@ -787,7 +787,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_23",
-        "title": "ラッセルのパラドックス — 入る？入らない？",
+        "title": "ラッセルのパラドックスのうた",
         "audio": "music/bug_song/theory_23.mp3",
         "cover": "images/music/theory_23.png",
         "tag": "ラッセルのパラドックス",
@@ -795,7 +795,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_29",
-        "title": "自己言及命題 — この文は嘘です",
+        "title": "自己言及命題 のうた",
         "audio": "music/bug_song/theory_29.mp3",
         "cover": "images/music/theory_29.png",
         "tag": "自己言及命題",
@@ -803,7 +803,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_07",
-        "title": "このうたは しょうめいできません",
+        "title": "ゲーデルの不完全性定理のうた",
         "audio": "music/bug_song/bug_07.mp3",
         "cover": "images/music/theory_07.png",
         "tag": "ゲーデルの不完全性定理",
@@ -811,7 +811,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_30",
-        "title": "意識のハードプロブレム — なぜ感じるの？",
+        "title": "意識のハードプロブレム のうた",
         "audio": "music/bug_song/theory_30.mp3",
         "cover": "images/music/theory_30.png",
         "tag": "意識のハードプロブレム",
@@ -819,7 +819,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_32",
-        "title": "パスカルの賭け — かみさまコイントス",
+        "title": "パスカルの賭けのうた",
         "audio": "music/bug_song/theory_32.mp3",
         "cover": "images/music/theory_32.png",
         "tag": "パスカルの賭け",
@@ -836,7 +836,7 @@ const musicPlaylists = [
     "tracks": [
       {
         "id": "theory_05",
-        "title": "どっちも ただしい きがする",
+        "title": "認知的不協和のうた",
         "audio": "music/bug_song/bug_05.mp3",
         "cover": "images/music/theory_05.png",
         "tag": "認知的不協和",
@@ -852,7 +852,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_20",
-        "title": "無限猿定理 — そのうちシェイクスピア",
+        "title": "無限猿定理 のうた",
         "audio": "music/bug_song/theory_20.mp3",
         "cover": "images/music/theory_20.png",
         "tag": "無限猿定理",
@@ -860,7 +860,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_21",
-        "title": "フラクタル — 同じ形がどこまでも",
+        "title": "フラクタルのうた",
         "audio": "music/bug_song/theory_21.mp3",
         "cover": "images/music/theory_21.png",
         "tag": "フラクタル",
@@ -868,7 +868,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_22",
-        "title": "再帰 — 自分で自分を呼び出す",
+        "title": "再帰 のうた",
         "audio": "music/bug_song/theory_22.mp3",
         "cover": "images/music/theory_22.png",
         "tag": "再帰",
@@ -884,7 +884,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_27",
-        "title": "進化論 — 変わるものが残る",
+        "title": "進化論 のうた",
         "audio": "music/bug_song/theory_27.mp3",
         "cover": "images/music/theory_27.png",
         "tag": "進化論",
@@ -892,7 +892,7 @@ const musicPlaylists = [
       },
       {
         "id": "theory_33",
-        "title": "GPT ポフの応答",
+        "title": "ChatGPT のうた",
         "audio": "music/bug_song/pof-gpt.mp3",
         "cover": "images/music/theory_33.png",
         "tag": "ChatGTP",
@@ -928,23 +928,39 @@ const musicPlaylists = [
         "title": "ワシ歌ってるやつ",
         "audio": "music/hx/hx_29.mp3",
         "tag": "H(x)∞",
-        "lyrics": "渋い \nどう聴いてもカエルちゃうやろ",
+        "lyrics": "どう聴いてもカエルちゃうやろ",
         "cover": ""
       },
       {
         "id": "bug_01",
-        "title": "癖になるやつ",
+        "title": "若いってええな",
         "audio": "music/other/跳ねる前のこの感じ.mp3",
         "tag": "その他",
-        "lyrics": "若いな…",
+        "lyrics": "若さってなんや？\n次の議題やな",
         "cover": ""
       },
       {
         "id": "hx_infinity",
-        "title": "何回も聴いてまうやつ",
+        "title": "意味分からんやつ",
         "audio": "music/hx/hx_01.mp3",
         "tag": "H(x)∞",
-        "lyrics": "なんでやろw ",
+        "lyrics": "ホンマなんなん？",
+        "cover": ""
+      },
+      {
+        "id": "theory_08",
+        "title": "コンビニで流れてたやつ",
+        "audio": "music/bug_song/bug_08.mp3",
+        "tag": "",
+        "lyrics": "　　",
+        "cover": ""
+      },
+      {
+        "id": "shino",
+        "title": "刺さるやつ",
+        "audio": "music/other/貧乏メガネのシノ.mp3",
+        "tag": "",
+        "lyrics": "　　",
         "cover": ""
       }
     ],
