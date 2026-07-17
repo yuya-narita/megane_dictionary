@@ -1,4 +1,4 @@
-/* 144_audio_continue_drag.js production1
+/* 144_audio_continue_drag.js production2
  * mvp_last + production143 専用
  *
  * 右下▶
@@ -8,7 +8,9 @@
  * ミニプレイヤー
  * - ドラッグで自由移動
  * - 素早く上下へフリックで非表示
- * - 位置をlocalStorageへ保存
+ * - 位置・表示状態をlocalStorageへ保存
+ * - 再起動／外部検索からの復帰でも再表示
+ * - ドラッグ終了時に左右端へ吸着
  *
  * 軽量設計
  * - MutationObserverなし
@@ -21,9 +23,10 @@
   var BAR_ID = "meganeMiniPlayer144";
   var STYLE_ID = "meganeMiniPlayer144Style";
   var STORE = "megane_audio_continue_144_v1";
-  var POS_STORE = "megane_audio_continue_144_pos_v1";
-  var HIDDEN_STORE = "megane_audio_continue_144_hidden_v1";
+  var UI_STORE = "megane_audio_continue_144_ui_v2";
   var LONG_MS = 520;
+  var SNAP_MARGIN = 12;
+  var SNAP_NEAR = 42;
 
   var activeAudio = null;
   var activeType = "";
@@ -46,6 +49,32 @@
 
   function writeJSON(key,value){
     try{ localStorage.setItem(key,JSON.stringify(value)); }catch(_){}
+  }
+
+  function readUI(){
+    var state=readJSON(UI_STORE,null);
+    if(!state){
+      return {
+        visible:false,
+        xRatio:null,
+        yRatio:null,
+        snapX:"left",
+        snapY:""
+      };
+    }
+    return {
+      visible:state.visible===true,
+      xRatio:Number.isFinite(Number(state.xRatio)) ? Number(state.xRatio) : null,
+      yRatio:Number.isFinite(Number(state.yRatio)) ? Number(state.yRatio) : null,
+      snapX:state.snapX==="right" ? "right" : "left",
+      snapY:state.snapY==="top" || state.snapY==="bottom" ? state.snapY : ""
+    };
+  }
+
+  function writeUI(patch){
+    var state=readUI();
+    Object.keys(patch || {}).forEach(function(key){ state[key]=patch[key]; });
+    writeJSON(UI_STORE,state);
   }
 
   function isAudioUsable(a){
@@ -195,6 +224,10 @@
         touch-action:manipulation;
       }
       #${BAR_ID}.mp144-dragging{transition:none}
+      #${BAR_ID}.mp144-snapping{
+        transition:left .18s cubic-bezier(.2,.8,.2,1),
+                   top .18s cubic-bezier(.2,.8,.2,1);
+      }
       #${BAR_ID}.mp144-hide{
         transition:opacity .16s ease,transform .16s ease;
         opacity:0;
@@ -237,11 +270,17 @@
   function viewportBounds(bar){
     var w=bar.offsetWidth || 330;
     var h=bar.offsetHeight || 62;
+    var vv=window.visualViewport;
+    var viewW=vv ? vv.width : window.innerWidth;
+    var viewH=vv ? vv.height : window.innerHeight;
+    var offsetX=vv ? vv.offsetLeft : 0;
+    var offsetY=vv ? vv.offsetTop : 0;
+
     return {
-      minX:8,
-      maxX:Math.max(8,window.innerWidth-w-8),
-      minY:Math.max(8,(window.visualViewport ? window.visualViewport.offsetTop : 0)+8),
-      maxY:Math.max(8,(window.visualViewport ? window.visualViewport.height : window.innerHeight)-h-92)
+      minX:offsetX+SNAP_MARGIN,
+      maxX:Math.max(offsetX+SNAP_MARGIN,offsetX+viewW-w-SNAP_MARGIN),
+      minY:offsetY+SNAP_MARGIN,
+      maxY:Math.max(offsetY+SNAP_MARGIN,offsetY+viewH-h-92)
     };
   }
 
@@ -253,21 +292,81 @@
     };
   }
 
+  function positionFromState(bar,state){
+    var b=viewportBounds(bar);
+    var rangeX=Math.max(1,b.maxX-b.minX);
+    var rangeY=Math.max(1,b.maxY-b.minY);
+
+    var x;
+    if(state.snapX==="right") x=b.maxX;
+    else if(state.snapX==="left") x=b.minX;
+    else x=b.minX+rangeX*Math.max(0,Math.min(1,Number(state.xRatio||0)));
+
+    var y;
+    if(state.snapY==="top") y=b.minY;
+    else if(state.snapY==="bottom") y=b.maxY;
+    else if(state.yRatio!==null) y=b.minY+rangeY*Math.max(0,Math.min(1,Number(state.yRatio)));
+    else y=b.maxY;
+
+    return clampPosition(bar,x,y);
+  }
+
   function restorePosition(bar){
-    var p=readJSON(POS_STORE,null);
-    if(!p) return;
+    var state=readUI();
     requestAnimationFrame(function(){
-      var c=clampPosition(bar,Number(p.x||0),Number(p.y||0));
+      var c=positionFromState(bar,state);
       bar.style.left=c.x+"px";
       bar.style.top=c.y+"px";
     });
   }
 
-  function savePosition(bar){
-    writeJSON(POS_STORE,{
-      x:parseFloat(bar.style.left) || bar.getBoundingClientRect().left,
-      y:parseFloat(bar.style.top) || bar.getBoundingClientRect().top
+  function savePosition(bar,extra){
+    var r=bar.getBoundingClientRect();
+    var b=viewportBounds(bar);
+    var rangeX=Math.max(1,b.maxX-b.minX);
+    var rangeY=Math.max(1,b.maxY-b.minY);
+
+    writeUI(Object.assign({
+      xRatio:Math.max(0,Math.min(1,(r.left-b.minX)/rangeX)),
+      yRatio:Math.max(0,Math.min(1,(r.top-b.minY)/rangeY))
+    },extra || {}));
+  }
+
+  function snapPosition(bar){
+    var r=bar.getBoundingClientRect();
+    var b=viewportBounds(bar);
+
+    var leftDistance=Math.abs(r.left-b.minX);
+    var rightDistance=Math.abs(r.left-b.maxX);
+    var topDistance=Math.abs(r.top-b.minY);
+    var bottomDistance=Math.abs(r.top-b.maxY);
+
+    var snapX=leftDistance<=rightDistance ? "left" : "right";
+    var snapY="";
+    var targetX=snapX==="left" ? b.minX : b.maxX;
+    var targetY=Math.max(b.minY,Math.min(b.maxY,r.top));
+
+    if(topDistance<=SNAP_NEAR){
+      snapY="top";
+      targetY=b.minY;
+    }else if(bottomDistance<=SNAP_NEAR){
+      snapY="bottom";
+      targetY=b.maxY;
+    }
+
+    bar.classList.add("mp144-snapping");
+    bar.style.left=targetX+"px";
+    bar.style.top=targetY+"px";
+
+    writeUI({
+      visible:true,
+      snapX:snapX,
+      snapY:snapY,
+      xRatio:snapX==="right" ? 1 : 0,
+      yRatio:Math.max(0,Math.min(1,(targetY-b.minY)/Math.max(1,b.maxY-b.minY)))
     });
+
+    setTimeout(function(){ bar.classList.remove("mp144-snapping"); },210);
   }
 
   function bindDrag(bar){
@@ -316,7 +415,7 @@
       if(moved && Math.abs(totalY)>=78 && velocity>=0.48){
         hideBar();
       }else{
-        savePosition(bar);
+        snapPosition(bar);
       }
 
       try{ bar.releasePointerCapture(e.pointerId); }catch(_){}
@@ -364,24 +463,42 @@
     return true;
   }
 
-  function showBar(){
+  function showBar(options){
     var bar=ensureBar();
     if(!renderBar()) return false;
-    localStorage.removeItem(HIDDEN_STORE);
+
+    writeUI({visible:true});
     bar.classList.remove("mp144-hide");
     bar.hidden=false;
     restorePosition(bar);
+
+    if(options && options.pulse){
+      bar.animate(
+        [
+          {transform:"scale(.97)",opacity:.72},
+          {transform:"scale(1.015)",opacity:1},
+          {transform:"scale(1)",opacity:1}
+        ],
+        {duration:220,easing:"cubic-bezier(.2,.8,.2,1)"}
+      );
+    }
     return true;
   }
 
   function hideBar(){
     var bar=ensureBar();
-    localStorage.setItem(HIDDEN_STORE,"1");
+    writeUI({visible:false});
     bar.classList.add("mp144-hide");
     setTimeout(function(){
       bar.hidden=true;
       bar.classList.remove("mp144-hide");
     },170);
+  }
+
+  function restoreVisibility(){
+    var state=readUI();
+    if(!state.visible) return false;
+    return showBar();
   }
 
   function restoreSaved(){
@@ -489,7 +606,7 @@
     pressTimer=setTimeout(function(){
       longFired=true;
       suppressClickUntil=Date.now()+650;
-      showBar();
+      showBar({pulse:true});
       try{ if(navigator.vibrate) navigator.vibrate(12); }catch(_){}
     },LONG_MS);
   }
@@ -528,28 +645,29 @@
     window.addEventListener("pointerup",cancelRightPress,true);
     window.addEventListener("pointercancel",cancelRightPress,true);
 
-    window.addEventListener("pageshow",function(){
+    function resumeUI(){
       bindAudios();
-      if(!document.hidden){
-        var found=detectAudio();
-        if(found){
-          activeAudio=found.audio;
-          activeType=found.type;
-          save(found.audio,found.type,true);
-        }
+
+      var found=detectAudio();
+      if(found){
+        activeAudio=found.audio;
+        activeType=found.type;
+        save(found.audio,found.type,true);
       }
-    });
+
+      // Safari内ブラウザや外部検索から復帰した時も、
+      // 前回表示中なら同じ位置へ復元する。
+      if(readUI().visible){
+        requestAnimationFrame(function(){ restoreVisibility(); });
+        setTimeout(restoreVisibility,120);
+      }
+    }
+
+    window.addEventListener("pageshow",resumeUI);
+    window.addEventListener("focus",resumeUI);
 
     document.addEventListener("visibilitychange",function(){
-      if(!document.hidden){
-        bindAudios();
-        var found=detectAudio();
-        if(found){
-          activeAudio=found.audio;
-          activeType=found.type;
-          save(found.audio,found.type,true);
-        }
-      }
+      if(!document.hidden) resumeUI();
     });
 
     window.addEventListener("resize",function(){
@@ -559,8 +677,21 @@
       var c=clampPosition(bar,r.left,r.top);
       bar.style.left=c.x+"px";
       bar.style.top=c.y+"px";
-      savePosition(bar);
+      savePosition(bar,{visible:true});
     },{passive:true});
+
+    if(window.visualViewport){
+      window.visualViewport.addEventListener("resize",function(){
+        var bar=q(BAR_ID);
+        if(!bar || bar.hidden) return;
+        restorePosition(bar);
+      },{passive:true});
+    }
+
+    // アプリ再起動時も、前回表示中なら同じ位置へ戻す。
+    requestAnimationFrame(restoreVisibility);
+    setTimeout(restoreVisibility,180);
+    setTimeout(restoreVisibility,700);
 
     // 後からaudioが生成される構成への限定リトライ。常時監視ではない。
     setTimeout(bindAudios,500);
