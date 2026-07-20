@@ -8809,133 +8809,66 @@ footer.controls > button,
 
 
 /* =========================================================
-   MUSIC CLEAN v6 — 2026-07-21
-   style_responsive_v1.css を土台にした音楽専用の最小修正。
-   過去の v3〜v5 の locked 分離・巨大化指定は含めない。
+   MUSIC ORDER FIX v7
+   - ロックアルバムを通常アルバムの後ろへ送る
+   - ジャケット/ロックマスクの構造には触れない
+   - 狭い端末では通常アルバムとシングルだけ縮小
    ========================================================= */
 
-/* 音楽棚を画面内に収める。通常・ロック済み/未解除アルバムは
-   DOM本来の順番のまま、同じ2列セルとして扱う。 */
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
 body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final {
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  padding-left: clamp(8px, 3vw, 16px) !important;
-  padding-right: clamp(8px, 3vw, 16px) !important;
-  padding-bottom: calc(180px + env(safe-area-inset-bottom)) !important;
+  padding-left: clamp(10px, 4vw, 24px) !important;
+  padding-right: clamp(10px, 4vw, 24px) !important;
   overflow-x: hidden !important;
-  box-sizing: border-box !important;
 }
 
+/* アルバム棚は常に2列。 */
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
 body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  column-gap: clamp(8px, 2.5vw, 16px) !important;
+  column-gap: clamp(8px, 3vw, 22px) !important;
   row-gap: clamp(16px, 4vw, 22px) !important;
   width: 100% !important;
-  max-width: 100% !important;
   min-width: 0 !important;
-  margin: 0 !important;
-  align-items: start !important;
-  box-sizing: border-box !important;
 }
 
-/* v1の低画面時1列化を無効化。スマホでは常に2列を維持。 */
-@media (max-width: 340px), (max-height: 640px) {
-  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
-  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-/* 通常アルバム・ロックアルバムを同じセル寸法に戻す。 */
+/* 通常アルバムは先頭側。 */
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art,
 body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art {
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  grid-column: auto !important;
-  justify-self: stretch !important;
-  align-self: start !important;
-  width: 100% !important;
+  order: 0 !important;
   min-width: 0 !important;
+  width: 100% !important;
   max-width: 100% !important;
-  height: auto !important;
   margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  overflow: visible !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  touch-action: manipulation !important;
-  box-sizing: border-box !important;
 }
 
-/* lockedだけを巨大化・中央寄せしない。 */
+/* ロックアルバムだけ最後へ送る。
+   サイズ・マスク・角丸には触れず、元の見た目を維持する。 */
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked,
 body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked {
-  grid-column: auto !important;
-  justify-self: stretch !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
+  order: 999 !important;
 }
 
-/* ジャケットはセル幅に追従する正方形。 */
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-jacket,
-body.music-v7 #musicView.music-v7-albums .music-v7-jacket {
-  display: block !important;
+/* サムネはセルからはみ出さない。 */
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket {
   width: 100% !important;
+  max-width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
-  height: auto !important;
   aspect-ratio: 1 / 1 !important;
-  border-radius: 0 !important;
-  overflow: hidden !important;
-  box-sizing: border-box !important;
+  height: auto !important;
 }
 
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-jacket img,
-body.music-v7 #musicView.music-v7-albums .music-v7-jacket img {
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket img,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket img {
   display: block !important;
   width: 100% !important;
   height: 100% !important;
-  max-width: 100% !important;
   object-fit: cover !important;
 }
 
-/* ロックオーバーレイもジャケット内だけに収める。 */
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-art .music-v7-unlock-mask,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-art .music-v7-unlock-mask {
-  inset: 0 0 auto 0 !important;
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 1 / 1 !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
-  border-radius: 0 !important;
-}
-
-/* アルバム文字もセル幅を越えない。 */
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-copy,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-copy {
-  min-width: 0 !important;
-  max-width: 100% !important;
-  padding-top: 8px !important;
-}
-
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-copy strong,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-copy strong,
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-copy span,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-copy span {
-  max-width: 100% !important;
-  overflow-wrap: anywhere !important;
-}
-
-/* 小さい端末ではアルバム文字と列間を少し縮める。 */
+/* 狭いスマホだけ余白・文字を縮める。 */
 @media (max-width: 375px) {
   body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
   body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final {
@@ -8986,17 +8919,15 @@ body.music-v7 #musicView.music-v7-albums .music-v7-album-copy span {
   }
 }
 
-/* ---------------------------------------------------------
-   シングル（小さいサムネの横長カード）も狭い端末で縮小。
-   --------------------------------------------------------- */
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-list,
-body.music-v7 #musicView.music-v7-albums .music-v7-single-list {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+/* v1にある低い画面時の1列化を解除。 */
+@media (max-width: 340px), (max-height: 640px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 
+/* シングルも端末幅に応じて縮小する。 */
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-card,
 body.music-v7 #musicView.music-v7-albums .music-v7-single-card {
   width: 100% !important;
@@ -9005,14 +8936,12 @@ body.music-v7 #musicView.music-v7-albums .music-v7-single-card {
   grid-template-columns: clamp(44px, 14vw, 58px) minmax(0, 1fr) auto !important;
   gap: clamp(8px, 3vw, 12px) !important;
   padding: clamp(8px, 2.5vw, 10px) clamp(9px, 3vw, 12px) !important;
-  box-sizing: border-box !important;
 }
 
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-thumb,
 body.music-v7 #musicView.music-v7-albums .music-v7-single-thumb {
   width: clamp(44px, 14vw, 58px) !important;
   height: clamp(44px, 14vw, 58px) !important;
-  border-radius: clamp(10px, 3vw, 14px) !important;
 }
 
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-copy,
@@ -9031,10 +8960,5 @@ body.music-v7 #musicView.music-v7-albums .music-v7-single-copy {
   body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-card em,
   body.music-v7 #musicView.music-v7-albums .music-v7-single-card em {
     font-size: 10px !important;
-  }
-
-  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-single-card em,
-  body.music-v7 #musicView.music-v7-albums .music-v7-single-card em {
-    min-width: 42px !important;
   }
 }
