@@ -8536,3 +8536,273 @@ body.music-v7 .music-v7-single-list {
   background: rgba(255,222,150,.12);
 }
 
+
+
+/* =========================================================
+   RESPONSIVE FINAL FIX v1 — 2026-07-20
+   基準: iPhone 12 の現行表示を維持しつつ、
+   狭いスマホ / Safari表示倍率 / Androidでの破綻を抑える。
+   既存の機能・アニメーション・JSには触れない最終上書き。
+   ========================================================= */
+
+/* 1) 画面高の扱いを安定化。
+   svhをフォールバックに残し、対応ブラウザではdvhを優先する。 */
+html,
+body {
+  min-width: 0;
+  width: 100%;
+}
+
+body,
+.app,
+#app {
+  min-height: 100svh;
+}
+
+@supports (min-height: 100dvh) {
+  body,
+  .app,
+  #app {
+    min-height: 100dvh;
+  }
+}
+
+/* Gridの1fr領域が子要素の内容幅・内容高に引っ張られないようにする。 */
+.app,
+#app {
+  min-width: 0;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+/* 2) 上部4モードボタン。
+   通常のスマホ幅では必ず4つを1列に保ち、
+   極端に狭い表示幅だけ整った2×2へ切り替える。 */
+.mode-toggle,
+#modeToggle,
+body.mode-music.music-v7 .mode-toggle,
+body.mode-music.music-v7 #modeToggle {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 88px)) !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  flex-wrap: nowrap !important;
+}
+
+.mode-toggle .mode,
+#modeToggle .mode {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 88px !important;
+  padding-inline: 8px !important;
+  white-space: nowrap !important;
+}
+
+/* 3) 辞書カード。
+   標準幅では現在の見た目を変えず、狭い/低い画面でのみ
+   パディングと文字の収まりを調整する。 */
+body.mode-dictionary #card,
+body.mode-dictionary .card {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+body.mode-dictionary #card .content,
+body.mode-dictionary .card .content {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+body.mode-dictionary .dictionary-view,
+body.mode-dictionary .glass-name,
+body.mode-dictionary .character,
+body.mode-dictionary .word,
+body.mode-dictionary .translation {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 長い単語だけカード外へ飛び出さないよう縮小余地を作る。 */
+body.mode-dictionary .word {
+  overflow-wrap: normal;
+  text-wrap: balance;
+}
+
+body.mode-dictionary .translation,
+body.mode-dictionary .character {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-wrap: balance;
+}
+
+/* 4) MUSICアルバム棚。
+   通常時は既存の2列を維持。極端に狭い時だけ1列へ。 */
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+  min-width: 0 !important;
+}
+
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > *,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* 5) 下部ナビ。
+   小さい表示幅でも3ボタンが画面内に収まるよう最低幅を解除。 */
+footer.controls,
+.controls {
+  min-width: 0 !important;
+}
+
+footer.controls > button,
+.controls > button {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* ---------------------------------------------------------
+   狭いスマホ / Safariを少し拡大した状態
+   --------------------------------------------------------- */
+@media (max-width: 370px) {
+  .app,
+  #app {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 10px !important;
+  }
+
+  .mode-toggle,
+  #modeToggle,
+  body.mode-music.music-v7 .mode-toggle,
+  body.mode-music.music-v7 #modeToggle {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .mode-toggle .mode,
+  #modeToggle .mode {
+    max-width: none !important;
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+
+  body.mode-dictionary #card,
+  body.mode-dictionary .card {
+    border-radius: 28px !important;
+  }
+
+  body.mode-dictionary #card .content,
+  body.mode-dictionary .card .content {
+    padding: 22px 18px !important;
+  }
+
+  body.mode-dictionary .glass-name {
+    font-size: 14px !important;
+  }
+
+  body.mode-dictionary .character {
+    font-size: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  body.mode-dictionary .word {
+    font-size: clamp(42px, 14vw, 72px) !important;
+    margin-bottom: 20px !important;
+  }
+
+  body.mode-dictionary .translation {
+    font-size: clamp(18px, 5.2vw, 24px) !important;
+    line-height: 1.55 !important;
+  }
+
+  footer.controls {
+    left: max(12px, env(safe-area-inset-left)) !important;
+    right: max(12px, env(safe-area-inset-right)) !important;
+    gap: 8px !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   極端に狭い表示幅（大きめのページ倍率など）。
+   3+1の中途半端な折返しを禁止し、2×2に整える。
+   --------------------------------------------------------- */
+@media (max-width: 320px) {
+  .mode-toggle,
+  #modeToggle,
+  body.mode-music.music-v7 .mode-toggle,
+  body.mode-music.music-v7 #modeToggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: min(100%, 280px) !important;
+    margin-inline: auto !important;
+    row-gap: 7px !important;
+  }
+
+  .mode-toggle .mode,
+  #modeToggle .mode {
+    font-size: 12px !important;
+    max-width: none !important;
+  }
+
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 18px !important;
+  }
+
+  body.mode-dictionary #card .content,
+  body.mode-dictionary .card .content {
+    padding: 18px 14px !important;
+  }
+
+  body.mode-dictionary .word {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    font-size: clamp(36px, 14vw, 62px) !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   高さが低いSafari表示 / 横長に近い端末。
+   カード自体を無理に固定せず、中身だけ詰めて操作領域を守る。
+   --------------------------------------------------------- */
+@media (max-height: 760px) {
+  .app,
+  #app {
+    gap: 8px !important;
+  }
+
+  body.mode-dictionary #card {
+    margin-top: 8px !important;
+    margin-bottom: 82px !important;
+  }
+
+  body.mode-dictionary #card .content,
+  body.mode-dictionary .card .content {
+    padding-top: 18px !important;
+    padding-bottom: 18px !important;
+  }
+
+  body.mode-dictionary .character {
+    margin-bottom: 16px !important;
+  }
+
+  body.mode-dictionary .word {
+    margin-bottom: 16px !important;
+  }
+
+  body.mode-dictionary .translation {
+    min-height: 0 !important;
+    line-height: 1.5 !important;
+  }
+}
+
+/* 低く、かつ狭い時はMUSIC棚を1列にして横欠けを防ぐ。 */
+@media (max-width: 340px), (max-height: 640px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
