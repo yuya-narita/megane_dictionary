@@ -8920,3 +8920,68 @@ body.music-v7 #musicView.music-v7-albums .music-v7-album-copy {
     padding-right: 8px !important;
   }
 }
+
+/* =========================================================
+   MUSIC SCALE v4 — narrow phone support
+   390px基準は維持し、横幅が狭くなるほど棚全体を少し縮める。
+   ロックアルバムを含む全セルに同じ縮尺を適用。
+   ========================================================= */
+
+/* 389px以下: まず数pxだけ左右に余白を増やす */
+@media (max-width: 389px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    width: calc(100% - 12px) !important;
+    max-width: calc(100% - 12px) !important;
+    margin-inline: auto !important;
+    gap: 18px 8px !important;
+  }
+}
+
+/* 375px前後（iPhone SE等） */
+@media (max-width: 375px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    width: calc(100% - 20px) !important;
+    max-width: calc(100% - 20px) !important;
+    gap: 16px 8px !important;
+  }
+
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-copy,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-copy {
+    padding-inline: 0 !important;
+  }
+}
+
+/* 360px前後（Galaxy S8等） */
+@media (max-width: 360px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    width: calc(100% - 28px) !important;
+    max-width: calc(100% - 28px) !important;
+    gap: 14px 7px !important;
+  }
+
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-title,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-title {
+    font-size: clamp(13px, 4.1vw, 16px) !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-subtitle,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-subtitle {
+    font-size: clamp(10px, 3.2vw, 12px) !important;
+    overflow-wrap: anywhere !important;
+  }
+}
+
+/* 340px以下でも2列維持。ただし棚幅をさらに縮める */
+@media (max-width: 340px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: calc(100% - 34px) !important;
+    max-width: calc(100% - 34px) !important;
+    gap: 12px 6px !important;
+  }
+}
