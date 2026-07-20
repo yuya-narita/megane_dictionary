@@ -8985,3 +8985,62 @@ body.music-v7 #musicView.music-v7-albums .music-v7-album-copy {
     gap: 12px 6px !important;
   }
 }
+
+/* =========================================================
+   MUSIC SCALE v5 — locked album isolation restore
+   通常ライブラリだけ2列で縮小し、lockedアルバムは棚の最後に
+   1列・中央寄せで隔離する。縦スワイプをスクロール優先に戻す。
+   ========================================================= */
+
+/* 通常アルバムだけを2列セルとして扱う */
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art:not(.locked),
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art:not(.locked) {
+  grid-column: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  justify-self: stretch !important;
+  margin: 0 !important;
+  touch-action: manipulation !important;
+}
+
+/* ロックアルバムは通常棚の後ろへ独立表示 */
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked {
+  grid-column: 1 / -1 !important;
+  width: min(76%, 286px) !important;
+  max-width: 286px !important;
+  min-width: 0 !important;
+  justify-self: center !important;
+  margin: 54px auto 28px !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  touch-action: pan-y !important;
+}
+
+/* ロック側の画像は隔離枠に追従。通常サムネには影響させない */
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked .music-v7-jacket,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked .music-v7-jacket {
+  width: 100% !important;
+  max-width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  height: auto !important;
+}
+
+/* 小さい端末では隔離アルバムも少しだけ縮小 */
+@media (max-width: 375px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked {
+    width: min(72%, 252px) !important;
+    max-width: 252px !important;
+    margin-top: 58px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked,
+  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > .music-v7-album-art.locked {
+    width: min(70%, 236px) !important;
+    max-width: 236px !important;
+    margin-top: 62px !important;
+  }
+}
