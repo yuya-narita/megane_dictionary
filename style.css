@@ -8808,110 +8808,48 @@ footer.controls > button,
 }
 
 /* =========================================================
-   RESPONSIVE MUSIC FINAL FIX
-   音楽モード限定。辞書・カード・会議には影響させない。
-   - Safari拡大時の右側見切れを防止
-   - 通常幅の2列表示は維持
-   - 狭い表示幅では1列＋サムネ最大幅を設定
-   - 下部ナビの裏へ潜り込みにくい余白を確保
+   RESPONSIVE MUSIC SAFE FIX v2
+   音楽ライブラリの通常アルバム棚だけを微調整。
+   ロック／隔離アルバムの表示・配置には触れない。
    ========================================================= */
 
-body.mode-music.music-v7,
-body.music-v7.mode-music {
-  overflow-x: hidden !important;
-}
-
-body.mode-music.music-v7 #musicView,
-body.music-v7.mode-music #musicView {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  overflow-x: hidden !important;
-}
-
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
-body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf,
-body.music-v7 #musicView.music-v7-albums .music-v7-shelf {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-  padding-left: clamp(14px, 4vw, 24px) !important;
-  padding-right: clamp(14px, 4vw, 24px) !important;
-  padding-bottom: calc(124px + env(safe-area-inset-bottom)) !important;
-  overflow-x: hidden !important;
+body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final {
+  padding-left: 14px !important;
+  padding-right: 14px !important;
 }
 
 body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
 body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  column-gap: clamp(12px, 3.2vw, 22px) !important;
+  column-gap: 12px !important;
   row-gap: 22px !important;
-  overflow: visible !important;
-}
-
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > *,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > *,
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-art,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-art {
+  min-width: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
-  min-width: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  box-sizing: border-box !important;
-  overflow: hidden !important;
 }
 
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-jacket,
-body.music-v7 #musicView.music-v7-albums .music-v7-jacket,
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-art img,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-art img {
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-album-art,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-album-art {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket,
+body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final .music-v7-jacket {
   display: block !important;
-  width: 100% !important;
   max-width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 1 / 1 !important;
-  object-fit: cover !important;
-  box-sizing: border-box !important;
 }
 
-body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-copy,
-body.music-v7 #musicView.music-v7-albums .music-v7-album-copy {
-  min-width: 0 !important;
-  max-width: 100% !important;
-  overflow-wrap: anywhere !important;
-}
-
-/* Safari拡大など、CSS上の幅が狭くなった時だけ1列にする。
-   サムネは画面いっぱいに巨大化させず中央へ収める。 */
 @media (max-width: 340px) {
   body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
-  body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final,
-  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-shelf,
-  body.music-v7 #musicView.music-v7-albums .music-v7-shelf {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+  body.music-v7 #musicView.music-v7-albums .music-v7-shelf-row-final {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
   }
 
   body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final,
   body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final {
-    grid-template-columns: minmax(0, 1fr) !important;
-    justify-items: center !important;
-    width: 100% !important;
-  }
-
-  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > *,
-  body.music-v7 #musicView.music-v7-albums .music-v7-album-grid-final > *,
-  body.mode-music.music-v7 #musicView.music-v7-albums .music-v7-album-art,
-  body.music-v7 #musicView.music-v7-albums .music-v7-album-art {
-    width: min(100%, 292px) !important;
-    max-width: 292px !important;
-    margin-inline: auto !important;
+    column-gap: 8px !important;
   }
 }
