@@ -1,8 +1,8 @@
-/* 108_music_prohibited_stage_v4.js
+/* 108_music_prohibited_stage_v5.js
    - V7の隔離棚を優先
    - 旧ステージを自動削除
    - 「👁 未観測」「🔒 未観測」だけを非表示
-   - ヒント文（例：3種類観測すると出現）は残す
+   - ヒント文の手動改行・行間・余白を固定
 */
 (function(){
 "use strict";
@@ -45,7 +45,40 @@ function injectStyle(){
     ".music-prohibited-stage{grid-column:1/-1;width:100%;display:flex;justify-content:center;padding:34px 18px 90px}" +
     ".music-prohibited-stage-inner{width:min(250px,72vw);text-align:center}" +
     ".music-v7-restricted-grid .music-v7-unlock-mask b:empty," +
-    ".music-v7-restricted-album .music-v7-unlock-mask b:empty{display:none!important}";
+    ".music-v7-restricted-album .music-v7-unlock-mask b:empty{display:none!important}" +
+    ".music-v7-restricted-grid .music-v7-unlock-mask," +
+    ".music-v7-restricted-album .music-v7-unlock-mask{" +
+      "padding:5.5% 5%!important;" +
+      "display:flex!important;" +
+      "align-items:center!important;" +
+      "justify-content:center!important;" +
+      "overflow:hidden!important;" +
+      "white-space:pre-line!important;" +
+      "word-break:keep-all!important;" +
+      "overflow-wrap:normal!important;" +
+      "line-break:strict!important;" +
+      "line-height:.9!important;" +
+      "letter-spacing:-.065em!important;" +
+    "}" +
+    ".music-v7-restricted-grid .music-v7-unlock-mask>*:not(b)," +
+    ".music-v7-restricted-album .music-v7-unlock-mask>*:not(b){" +
+      "white-space:pre-line!important;" +
+      "word-break:keep-all!important;" +
+      "overflow-wrap:normal!important;" +
+      "line-break:strict!important;" +
+      "text-align:left!important;" +
+      "line-height:.9!important;" +
+      "letter-spacing:-.065em!important;" +
+      "max-width:100%!important;" +
+      "margin:0!important;" +
+      "padding:0!important;" +
+    "}" +
+    "@media(max-width:430px){" +
+      ".music-v7-restricted-grid .music-v7-unlock-mask," +
+      ".music-v7-restricted-album .music-v7-unlock-mask{" +
+        "padding:5% 4.5%!important;" +
+      "}" +
+    "}";
   document.head.appendChild(s);
 }
 
