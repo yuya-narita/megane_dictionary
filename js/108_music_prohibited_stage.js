@@ -1,8 +1,8 @@
-/* 108_music_prohibited_stage_v5.js
+/* 108_music_prohibited_stage_v6.js
    - V7の隔離棚を優先
    - 旧ステージを自動削除
    - 「👁 未観測」「🔒 未観測」だけを非表示
-   - ヒント文の手動改行・行間・余白を固定
+   - 巨大ヒントをあえて少しはみ出させ、行間から表紙を覗かせる
 */
 (function(){
 "use strict";
@@ -48,17 +48,17 @@ function injectStyle(){
     ".music-v7-restricted-album .music-v7-unlock-mask b:empty{display:none!important}" +
     ".music-v7-restricted-grid .music-v7-unlock-mask," +
     ".music-v7-restricted-album .music-v7-unlock-mask{" +
-      "padding:5.5% 5%!important;" +
+      "padding:2% 1%!important;" +
       "display:flex!important;" +
       "align-items:center!important;" +
       "justify-content:center!important;" +
-      "overflow:hidden!important;" +
+      "overflow:visible!important;" +
       "white-space:pre-line!important;" +
       "word-break:keep-all!important;" +
       "overflow-wrap:normal!important;" +
       "line-break:strict!important;" +
-      "line-height:.9!important;" +
-      "letter-spacing:-.065em!important;" +
+      "line-height:1.02!important;" +
+      "letter-spacing:-.045em!important;" +
     "}" +
     ".music-v7-restricted-grid .music-v7-unlock-mask>*:not(b)," +
     ".music-v7-restricted-album .music-v7-unlock-mask>*:not(b){" +
@@ -67,16 +67,16 @@ function injectStyle(){
       "overflow-wrap:normal!important;" +
       "line-break:strict!important;" +
       "text-align:left!important;" +
-      "line-height:.9!important;" +
-      "letter-spacing:-.065em!important;" +
-      "max-width:100%!important;" +
+      "line-height:1.02!important;" +
+      "letter-spacing:-.045em!important;" +
+      "max-width:none!important;" +"width:112%!important;" +"transform:translateX(-4%)!important;" +
       "margin:0!important;" +
       "padding:0!important;" +
     "}" +
     "@media(max-width:430px){" +
       ".music-v7-restricted-grid .music-v7-unlock-mask," +
       ".music-v7-restricted-album .music-v7-unlock-mask{" +
-        "padding:5% 4.5%!important;" +
+        "padding:1.5% 0!important;" +
       "}" +
     "}";
   document.head.appendChild(s);
