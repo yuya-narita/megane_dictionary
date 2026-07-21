@@ -1008,7 +1008,7 @@ const musicPlaylists = [
     "locked": true,
     "unlockCode": "LOOK BACK",
     "lockLabel": null,
-    "lockHint": "解除コード入力",
+    "lockHint": "解除\nコード\n入力",
     "lockMessage": "このアルバムは封印されています。",
     "unlockMessage": "ACCESS GRANTED",
     "failMessage": "解除コードが違います。",
