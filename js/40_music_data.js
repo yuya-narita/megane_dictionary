@@ -390,7 +390,7 @@ const musicPlaylists = [
       "type": "cardKinds",
       "need": 3,
       "mode": "ghost",
-      "label": "",
+      "label": null,
       "hint": "3種類観測すると出現",
       "progressLabel": "カード観測",
       "unlockedMessage": "The Looking Bear Land が観測されました。"
@@ -1007,7 +1007,7 @@ const musicPlaylists = [
     "desc": "立入禁止",
     "locked": true,
     "unlockCode": "LOOK BACK",
-    "lockLabel": "🚫 禁止",
+    "lockLabel": null,
     "lockHint": "解除コード入力",
     "lockMessage": "このアルバムは封印されています。",
     "unlockMessage": "ACCESS GRANTED",
