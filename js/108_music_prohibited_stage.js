@@ -1,6 +1,9 @@
-/* 108_music_prohibited_stage_designed_svg_poster.js
-   LOOKING BEAR 初回ロック専用タイポグラフィポスター
-   SVGで一枚の紙面として手組み。文字同士を重ねず、大小と90度回転で密度を作る。
+/* 108_music_prohibited_stage_cinema_poster.js
+   LOOKING BEAR 初回ロック専用・映画館ポスター版
+   - 中央のクマを見せる
+   - 情報階層を4段階に整理
+   - 「観測すると」は一行のまま90度回転
+   - SVGで一枚の紙面として固定配置
 */
 (function(){
 "use strict";
@@ -34,7 +37,7 @@ function injectStyle(){
     }
     .music-v7-unlock-mask b:empty{display:none!important}
 
-    .music-v7-unlock-mask.lb-svg-poster-mask{
+    .music-v7-unlock-mask.lb-cinema-poster-mask{
       position:absolute!important;
       inset:0!important;
       display:block!important;
@@ -43,11 +46,11 @@ function injectStyle(){
       border-radius:inherit!important;
       pointer-events:none!important;
       background:
-        linear-gradient(180deg,rgba(0,0,0,.03),rgba(0,0,0,.30)),
-        linear-gradient(90deg,rgba(0,0,0,.14),transparent 45%,rgba(0,0,0,.12))!important;
+        radial-gradient(circle at 51% 47%, transparent 0 21%, rgba(0,0,0,.03) 36%, rgba(0,0,0,.22) 100%),
+        linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.27))!important;
     }
 
-    .lb-svg-poster{
+    .lb-cinema-poster{
       position:absolute;
       inset:0;
       width:100%;
@@ -55,10 +58,10 @@ function injectStyle(){
       display:block;
       overflow:hidden;
       color:#efe5b3;
-      filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));
+      filter:drop-shadow(0 2px 2px rgba(0,0,0,.58));
     }
 
-    .lb-svg-poster text{
+    .lb-cinema-poster text{
       fill:currentColor;
       font-family:
         "Arial Black",
@@ -69,25 +72,29 @@ function injectStyle(){
       font-weight:900;
     }
 
-    .lb-svg-poster .jp{
-      letter-spacing:-.075em;
+    .lb-cinema-poster .jp{letter-spacing:-.08em}
+    .lb-cinema-poster .thin{
+      font-family:
+        "Helvetica Neue",
+        "Hiragino Sans",
+        "Yu Gothic",
+        sans-serif;
+      font-weight:700;
+      letter-spacing:.03em;
     }
-
-    .lb-svg-poster .en{
+    .lb-cinema-poster .en{
       font-family:"Helvetica Neue",Arial,sans-serif;
       font-weight:800;
-      letter-spacing:.08em;
+      letter-spacing:.10em;
     }
-
-    .lb-svg-poster .rule{
+    .lb-cinema-poster .rule{
       stroke:currentColor;
-      stroke-width:5;
-      opacity:.86;
+      stroke-width:4;
+      opacity:.82;
     }
-
-    .lb-svg-poster .thin{
-      stroke-width:2.5;
-      opacity:.72;
+    .lb-cinema-poster .hair{
+      stroke-width:2;
+      opacity:.58;
     }
   `;
   document.head.appendChild(s);
@@ -109,73 +116,83 @@ function scrubDefaultLabels(root){
 
 function posterHTML(){
   return `
-  <svg class="lb-svg-poster" viewBox="0 0 1000 1000"
+  <svg class="lb-cinema-poster" viewBox="0 0 1000 1000"
        preserveAspectRatio="none" aria-hidden="true">
 
-    <!-- 上段：数字を最優先で見せる -->
-    <text class="jp" x="-18" y="226" font-size="278">3</text>
-    <text class="jp" x="255" y="198" font-size="154"
-          textLength="515" lengthAdjust="spacingAndGlyphs">種類</text>
+    <!-- LEVEL 1 / 画面の骨格 -->
+    <text class="jp" x="-22" y="235" font-size="300">3</text>
 
-    <line class="rule" x1="258" y1="226" x2="760" y2="226"/>
-    <text class="en" x="273" y="257" font-size="24"
-          textLength="473" lengthAdjust="spacingAndGlyphs">THREE DIFFERENT CARDS</text>
+    <text class="jp" x="615" y="980" font-size="205"
+          textLength="370" lengthAdjust="spacingAndGlyphs">出現</text>
 
-    <!-- 右端：一行のまま90度回転 -->
-    <g transform="translate(947 252) rotate(90)">
-      <text class="jp" x="0" y="0" font-size="86"
-            textLength="560" lengthAdjust="spacingAndGlyphs">観測すると</text>
-      <line class="thin" x1="0" y1="22" x2="560" y2="22"/>
+    <!-- LEVEL 2 / 大見出し -->
+    <text class="jp" x="285" y="178" font-size="148"
+          textLength="520" lengthAdjust="spacingAndGlyphs">種類</text>
+
+    <text class="jp" x="28" y="744" font-size="170"
+          textLength="340" lengthAdjust="spacingAndGlyphs">6曲</text>
+
+    <text class="jp" x="392" y="730" font-size="128"
+          textLength="300" lengthAdjust="spacingAndGlyphs">解放</text>
+
+    <!-- LEVEL 3 / 中情報。中央の顔を避けて左右に分散 -->
+    <text class="jp thin" x="52" y="350" font-size="62"
+          textLength="380" lengthAdjust="spacingAndGlyphs">異なるカード</text>
+
+    <text class="jp" x="45" y="460" font-size="122"
+          textLength="280" lengthAdjust="spacingAndGlyphs">三種</text>
+
+    <text class="jp thin" x="48" y="522" font-size="55"
+          textLength="255" lengthAdjust="spacingAndGlyphs">集める</text>
+
+    <g transform="translate(955 280) rotate(90)">
+      <text class="jp thin" x="0" y="0" font-size="72"
+            textLength="470" lengthAdjust="spacingAndGlyphs">観測すると</text>
+      <line class="hair" x1="0" y1="24" x2="470" y2="24"/>
     </g>
 
-    <!-- 中段上：条件 -->
-    <text class="jp" x="32" y="362" font-size="92"
-          textLength="690" lengthAdjust="spacingAndGlyphs">異なるカード</text>
+    <!-- 中央のクマを空けるための視覚的なフレーム -->
+    <line class="rule" x1="36" y1="272" x2="790" y2="272"/>
+    <line class="hair" x1="36" y1="560" x2="690" y2="560"/>
+    <line class="rule" x1="36" y1="785" x2="700" y2="785"/>
 
-    <text class="jp" x="25" y="510" font-size="176"
-          textLength="340" lengthAdjust="spacingAndGlyphs">三種</text>
+    <!-- LEVEL 4 / 小さな情報 -->
+    <text class="en" x="300" y="220" font-size="22"
+          textLength="470" lengthAdjust="spacingAndGlyphs">THREE DIFFERENT CARDS</text>
 
-    <text class="jp" x="390" y="500" font-size="100"
-          textLength="350" lengthAdjust="spacingAndGlyphs">集める</text>
+    <text class="en" x="50" y="590" font-size="22"
+          textLength="300" lengthAdjust="spacingAndGlyphs">COLLECT / OBSERVE / OPEN</text>
 
-    <text class="en" x="402" y="538" font-size="24"
-          textLength="330" lengthAdjust="spacingAndGlyphs">COLLECT / OBSERVE / OPEN</text>
+    <text class="en" x="398" y="765" font-size="20"
+          textLength="285" lengthAdjust="spacingAndGlyphs">TRACK 01—06 UNLOCK</text>
 
-    <!-- 中段下：解放内容 -->
-    <line class="rule" x1="31" y1="574" x2="744" y2="574"/>
+    <text class="en" x="42" y="820" font-size="25"
+          textLength="310" lengthAdjust="spacingAndGlyphs">FIRST OBSERVATION GATE</text>
 
-    <text class="jp" x="25" y="745" font-size="196"
-          textLength="344" lengthAdjust="spacingAndGlyphs">6曲</text>
+    <text class="en" x="385" y="820" font-size="25"
+          textLength="315" lengthAdjust="spacingAndGlyphs">THE LOOKING BEAR LAND</text>
 
-    <text class="jp" x="390" y="724" font-size="148"
-          textLength="350" lengthAdjust="spacingAndGlyphs">解放</text>
+    <text class="en" x="44" y="855" font-size="20"
+          textLength="260" lengthAdjust="spacingAndGlyphs">ENTRY CONDITION / 03</text>
 
-    <text class="en" x="403" y="762" font-size="23"
-          textLength="325" lengthAdjust="spacingAndGlyphs">TRACK 01—06 UNLOCKED</text>
+    <text class="en" x="390" y="855" font-size="20"
+          textLength="300" lengthAdjust="spacingAndGlyphs">RESTRICTED OBSERVATION</text>
 
-    <!-- 紙面密度を作る小情報。重ねず、空き領域に詰める -->
-    <text class="en" x="31" y="806" font-size="27"
-          textLength="320" lengthAdjust="spacingAndGlyphs">FIRST OBSERVATION GATE</text>
+    <text class="en" x="44" y="890" font-size="18"
+          textLength="240" lengthAdjust="spacingAndGlyphs">CARD ARCHIVE</text>
 
-    <text class="en" x="390" y="805" font-size="27"
-          textLength="350" lengthAdjust="spacingAndGlyphs">THE LOOKING BEAR LAND</text>
+    <text class="en" x="390" y="890" font-size="18"
+          textLength="300" lengthAdjust="spacingAndGlyphs">MUSIC ACCESS 01—06</text>
 
-    <line class="thin" x1="31" y1="827" x2="740" y2="827"/>
+    <!-- 左右の縦ノイズ -->
+    <g transform="translate(18 800) rotate(-90)">
+      <text class="en" x="0" y="0" font-size="18"
+            textLength="300" lengthAdjust="spacingAndGlyphs">LOOKING BEAR / FIRST GATE</text>
+    </g>
 
-    <text class="jp" x="31" y="864" font-size="35"
-          textLength="330" lengthAdjust="spacingAndGlyphs">入口封鎖中</text>
-
-    <text class="en" x="390" y="863" font-size="25"
-          textLength="350" lengthAdjust="spacingAndGlyphs">RESTRICTED OBSERVATION</text>
-
-    <!-- 最下段：結果を強く -->
-    <text class="jp" x="16" y="1012" font-size="190"
-          textLength="720" lengthAdjust="spacingAndGlyphs">出現</text>
-
-    <!-- 左端の縦情報 -->
-    <g transform="translate(17 812) rotate(-90)">
-      <text class="en" x="0" y="0" font-size="22"
-            textLength="390" lengthAdjust="spacingAndGlyphs">CARD 03 / MUSIC 06 / ENTRY CONDITION</text>
+    <g transform="translate(985 880) rotate(90)">
+      <text class="en" x="0" y="0" font-size="17"
+            textLength="230" lengthAdjust="spacingAndGlyphs">OBSERVE THREE</text>
     </g>
   </svg>`;
 }
@@ -184,7 +201,7 @@ function applyPoster(root){
   root=root||document;
 
   root.querySelectorAll(".music-v7-unlock-mask").forEach(function(mask){
-    if(mask.dataset.lbSvgPoster==="1") return;
+    if(mask.dataset.lbCinemaPoster==="1") return;
 
     var raw=(mask.textContent||"").replace(/\s+/g,"");
     var target=
@@ -194,8 +211,8 @@ function applyPoster(root){
 
     if(!target) return;
 
-    mask.dataset.lbSvgPoster="1";
-    mask.classList.add("lb-svg-poster-mask");
+    mask.dataset.lbCinemaPoster="1";
+    mask.classList.add("lb-cinema-poster-mask");
     mask.setAttribute("aria-label","異なる3種類のカードを観測すると6曲解放");
     mask.innerHTML=posterHTML();
   });
