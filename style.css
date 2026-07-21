@@ -8819,3 +8819,12 @@ footer.controls > button,
   text-align:left;
   padding:6% 5%;
 }
+.glass-item:focus,
+.glass-item:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.glass-item::-moz-focus-inner {
+  border: 0;
+}
