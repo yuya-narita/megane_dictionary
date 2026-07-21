@@ -1,278 +1,282 @@
-/* 108_music_prohibited_stage_cinema_poster.js
-   LOOKING BEAR 初回ロック専用・映画館ポスター版
-   - 中央のクマを見せる
-   - 情報階層を4段階に整理
-   - 「観測すると」は一行のまま90度回転
-   - SVGで一枚の紙面として固定配置
+/* 108_music_prohibited_stage.js
+   ISOLATION ALBUM — HYBRID EVIDENCE ARCHIVE
+   CSS typography + lightweight image texture.
 */
-(function(){
-"use strict";
+(function () {
+  "use strict";
 
-function usingV7(){
-  return !!document.querySelector(".music-v7-restricted-grid");
-}
+  var STYLE_ID = "musicProhibitedHybridStyle";
+  var POSTER_CLASS = "prohibited-hybrid-poster";
+  var TIMER = 0;
 
-function removeLegacy(){
-  var old=document.querySelector(".music-prohibited-stage");
-  if(old) old.remove();
-}
+  function injectStyle() {
+    if (document.getElementById(STYLE_ID)) return;
 
-function injectStyle(){
-  var old=document.getElementById("musicProhibitedStageStyle");
-  if(old) old.remove();
+    var style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = `
+      .music-v7-restricted-grid .music-v7-album-art.prohibited-hybrid-card
+      .music-v7-jacket{
+        position:relative !important;
+        overflow:hidden !important;
+        background:#080808 !important;
+        border:1px solid rgba(216,203,174,.34) !important;
+        box-shadow:
+          inset 0 0 0 1px rgba(255,255,255,.025),
+          inset 0 0 42px rgba(0,0,0,.92),
+          0 17px 38px rgba(0,0,0,.42) !important;
+      }
 
-  var s=document.createElement("style");
-  s.id="musicProhibitedStageStyle";
-  s.textContent=`
-    .music-prohibited-stage{
-      grid-column:1/-1;
-      width:100%;
-      display:flex;
-      justify-content:center;
-      padding:34px 18px 90px
-    }
-    .music-prohibited-stage-inner{
-      width:min(250px,72vw);
-      text-align:center
-    }
-    .music-v7-unlock-mask b:empty{display:none!important}
+      .music-v7-restricted-grid .music-v7-album-art.prohibited-hybrid-card
+      .music-v7-jacket > img,
+      .music-v7-restricted-grid .music-v7-album-art.prohibited-hybrid-card
+      .music-v7-jacket > span{
+        opacity:0 !important;
+        pointer-events:none !important;
+      }
 
-    .music-v7-unlock-mask.lb-cinema-poster-mask{
-      position:absolute!important;
-      inset:0!important;
-      display:block!important;
-      padding:0!important;
-      overflow:hidden!important;
-      border-radius:inherit!important;
-      pointer-events:none!important;
-      background:
-        radial-gradient(circle at 51% 47%, transparent 0 21%, rgba(0,0,0,.03) 36%, rgba(0,0,0,.22) 100%),
-        linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.27))!important;
-    }
+      .music-v7-restricted-grid .music-v7-album-art.prohibited-hybrid-card
+      .music-v7-unlock-mask{
+        display:none !important;
+      }
 
-    .lb-cinema-poster{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      display:block;
-      overflow:hidden;
-      color:#efe5b3;
-      filter:drop-shadow(0 2px 2px rgba(0,0,0,.58));
-    }
+      .${POSTER_CLASS}{
+        --paper:#d1c5a9;
+        --dim:#9b917c;
+        --red:#8f2721;
+        position:absolute;
+        inset:0;
+        z-index:5;
+        overflow:hidden;
+        color:var(--paper);
+        background:
+          linear-gradient(rgba(5,5,5,.38),rgba(5,5,5,.62)),
+          url("./prohibited_texture.webp") center/cover no-repeat,
+          #090909;
+        font-family:
+          "Arial Narrow","DIN Condensed","Helvetica Neue",
+          "Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;
+        isolation:isolate;
+      }
 
-    .lb-cinema-poster text{
-      fill:currentColor;
-      font-family:
-        "Arial Black",
-        "Helvetica Neue",
-        "Hiragino Kaku Gothic ProN",
-        "Yu Gothic",
-        sans-serif;
-      font-weight:900;
-    }
+      .${POSTER_CLASS}::before{
+        content:"";
+        position:absolute;
+        inset:7px;
+        border:1px solid rgba(209,197,169,.25);
+        box-shadow:inset 0 0 24px rgba(0,0,0,.65);
+        pointer-events:none;
+      }
 
-    .lb-cinema-poster .jp{letter-spacing:-.08em}
-    .lb-cinema-poster .thin{
-      font-family:
-        "Helvetica Neue",
-        "Hiragino Sans",
-        "Yu Gothic",
-        sans-serif;
-      font-weight:700;
-      letter-spacing:.03em;
-    }
-    .lb-cinema-poster .en{
-      font-family:"Helvetica Neue",Arial,sans-serif;
-      font-weight:800;
-      letter-spacing:.10em;
-    }
-    .lb-cinema-poster .rule{
-      stroke:currentColor;
-      stroke-width:4;
-      opacity:.82;
-    }
-    .lb-cinema-poster .hair{
-      stroke-width:2;
-      opacity:.58;
-    }
-  `;
-  document.head.appendChild(s);
-}
+      .${POSTER_CLASS}::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        opacity:.34;
+        pointer-events:none;
+        background:
+          radial-gradient(circle at 14% 16%,rgba(255,255,255,.05),transparent 27%),
+          radial-gradient(circle at 83% 70%,rgba(255,255,255,.035),transparent 31%),
+          repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.012) 4px),
+          linear-gradient(105deg,transparent 0 48%,rgba(255,255,255,.045) 48.2%,transparent 48.8%);
+        mix-blend-mode:screen;
+      }
 
-function scrubDefaultLabels(root){
-  root=root||document;
-  root.querySelectorAll(
-    ".music-v7-restricted-grid .music-v7-unlock-mask b,"+
-    ".music-v7-restricted-album .music-v7-unlock-mask b"
-  ).forEach(function(el){
-    var t=(el.textContent||"").replace(/\s+/g,"").trim();
-    if(t.indexOf("未観測")>=0 || t.indexOf("👁")>=0 || t.indexOf("👁️")>=0){
-      el.textContent="";
-      el.style.display="none";
-    }
-  });
-}
+      .${POSTER_CLASS} *{box-sizing:border-box}
 
-function posterHTML(){
-  return `
-  <svg class="lb-cinema-poster" viewBox="0 0 1000 1000"
-       preserveAspectRatio="none" aria-hidden="true">
+      .pep-top{
+        position:absolute;top:7%;left:8%;right:8%;
+        display:flex;justify-content:space-between;align-items:flex-start;
+        font-size:clamp(7px,2.6vw,11px);
+        line-height:1.12;letter-spacing:.19em;font-weight:800;color:var(--dim);
+      }
+      .pep-top small{
+        display:block;margin-top:4px;font-size:.7em;letter-spacing:.23em;font-weight:600;opacity:.76;
+      }
+      .pep-level{
+        border:1px solid rgba(209,197,169,.35);
+        padding:5px 6px 4px;text-align:center;min-width:40px;
+      }
+      .pep-level b{
+        display:block;margin-top:2px;color:var(--red);
+        font-size:2.2em;line-height:.9;letter-spacing:0;
+      }
 
-    <!-- LEVEL 1 / 画面の骨格 -->
-    <text class="jp" x="-22" y="235" font-size="300">3</text>
+      .pep-side{
+        position:absolute;top:22%;bottom:18%;width:9.5%;
+        display:flex;align-items:center;justify-content:center;
+        font-size:clamp(8px,3vw,12px);font-weight:900;letter-spacing:.08em;
+        color:rgba(209,197,169,.72);writing-mode:vertical-rl;text-orientation:mixed;
+      }
+      .pep-side-left{left:1.7%;transform:rotate(180deg);border-left:1px solid rgba(209,197,169,.18)}
+      .pep-side-right{right:1.7%;border-left:1px solid rgba(209,197,169,.18)}
 
-    <text class="jp" x="615" y="980" font-size="205"
-          textLength="370" lengthAdjust="spacingAndGlyphs">出現</text>
+      .pep-kicker{
+        position:absolute;top:25.7%;left:15%;right:15%;
+        display:flex;align-items:center;gap:8px;
+        color:var(--dim);font-size:clamp(7px,2.4vw,10px);
+        font-weight:800;letter-spacing:.28em;white-space:nowrap;
+      }
+      .pep-kicker::before,.pep-kicker::after{
+        content:"";height:1px;flex:1;background:rgba(209,197,169,.35);
+      }
 
-    <!-- LEVEL 2 / 大見出し -->
-    <text class="jp" x="285" y="178" font-size="148"
-          textLength="520" lengthAdjust="spacingAndGlyphs">種類</text>
+      .pep-main{
+        position:absolute;top:31%;left:10%;right:10%;text-align:center;
+        font-family:"Arial Black","Noto Sans JP","Hiragino Kaku Gothic StdN",sans-serif;
+        font-size:clamp(36px,16vw,74px);font-weight:1000;
+        line-height:.94;letter-spacing:-.09em;color:#cabfa7;
+        text-shadow:1px 0 rgba(255,255,255,.08),-1px 0 rgba(0,0,0,.85);
+      }
+      .pep-main::after{
+        content:"";position:absolute;left:4%;right:4%;bottom:-11px;height:1px;
+        background:rgba(209,197,169,.34);
+      }
 
-    <text class="jp" x="28" y="744" font-size="170"
-          textLength="340" lengthAdjust="spacingAndGlyphs">6曲</text>
+      .pep-archive{
+        position:absolute;top:57%;left:15%;right:15%;text-align:center;
+        color:var(--dim);font-size:clamp(7px,2.5vw,11px);
+        font-weight:800;letter-spacing:.42em;white-space:nowrap;
+      }
 
-    <text class="jp" x="392" y="730" font-size="128"
-          textLength="300" lengthAdjust="spacingAndGlyphs">解放</text>
+      .pep-ban{
+        position:absolute;top:65.6%;left:50%;transform:translateX(-50%);
+        min-width:50%;padding:5px 8px 4px;
+        border:1px solid rgba(143,39,33,.9);color:#a02d27;text-align:center;
+        font-size:clamp(10px,4vw,17px);line-height:1;letter-spacing:.21em;font-weight:950;
+        background:rgba(5,5,5,.18);
+      }
+      .pep-ban small{
+        display:block;margin-top:5px;font-size:.42em;letter-spacing:.24em;font-weight:800;
+      }
 
-    <!-- LEVEL 3 / 中情報。中央の顔を避けて左右に分散 -->
-    <text class="jp thin" x="52" y="350" font-size="62"
-          textLength="380" lengthAdjust="spacingAndGlyphs">異なるカード</text>
+      .pep-stamp{
+        position:absolute;right:7%;bottom:17.5%;transform:rotate(-9deg);
+        border:2px solid rgba(143,39,33,.82);padding:5px 7px 3px;
+        color:rgba(159,44,36,.9);font-size:clamp(9px,3.5vw,15px);
+        font-weight:1000;letter-spacing:.04em;line-height:1;
+        background:rgba(5,5,5,.14);
+      }
 
-    <text class="jp" x="45" y="460" font-size="122"
-          textLength="280" lengthAdjust="spacingAndGlyphs">三種</text>
+      .pep-lookback{
+        position:absolute;left:9.5%;bottom:17.2%;
+        color:rgba(209,197,169,.36);
+        font-size:clamp(5px,1.8vw,8px);letter-spacing:.31em;font-weight:800;
+      }
 
-    <text class="jp thin" x="48" y="522" font-size="55"
-          textLength="255" lengthAdjust="spacingAndGlyphs">集める</text>
-
-    <g transform="translate(955 280) rotate(90)">
-      <text class="jp thin" x="0" y="0" font-size="72"
-            textLength="470" lengthAdjust="spacingAndGlyphs">観測すると</text>
-      <line class="hair" x1="0" y1="24" x2="470" y2="24"/>
-    </g>
-
-    <!-- 中央のクマを空けるための視覚的なフレーム -->
-    <line class="rule" x1="36" y1="272" x2="790" y2="272"/>
-    <line class="hair" x1="36" y1="560" x2="690" y2="560"/>
-    <line class="rule" x1="36" y1="785" x2="700" y2="785"/>
-
-    <!-- LEVEL 4 / 小さな情報 -->
-    <text class="en" x="300" y="220" font-size="22"
-          textLength="470" lengthAdjust="spacingAndGlyphs">THREE DIFFERENT CARDS</text>
-
-    <text class="en" x="50" y="590" font-size="22"
-          textLength="300" lengthAdjust="spacingAndGlyphs">COLLECT / OBSERVE / OPEN</text>
-
-    <text class="en" x="398" y="765" font-size="20"
-          textLength="285" lengthAdjust="spacingAndGlyphs">TRACK 01—06 UNLOCK</text>
-
-    <text class="en" x="42" y="820" font-size="25"
-          textLength="310" lengthAdjust="spacingAndGlyphs">FIRST OBSERVATION GATE</text>
-
-    <text class="en" x="385" y="820" font-size="25"
-          textLength="315" lengthAdjust="spacingAndGlyphs">THE LOOKING BEAR LAND</text>
-
-    <text class="en" x="44" y="855" font-size="20"
-          textLength="260" lengthAdjust="spacingAndGlyphs">ENTRY CONDITION / 03</text>
-
-    <text class="en" x="390" y="855" font-size="20"
-          textLength="300" lengthAdjust="spacingAndGlyphs">RESTRICTED OBSERVATION</text>
-
-    <text class="en" x="44" y="890" font-size="18"
-          textLength="240" lengthAdjust="spacingAndGlyphs">CARD ARCHIVE</text>
-
-    <text class="en" x="390" y="890" font-size="18"
-          textLength="300" lengthAdjust="spacingAndGlyphs">MUSIC ACCESS 01—06</text>
-
-    <!-- 左右の縦ノイズ -->
-    <g transform="translate(18 800) rotate(-90)">
-      <text class="en" x="0" y="0" font-size="18"
-            textLength="300" lengthAdjust="spacingAndGlyphs">LOOKING BEAR / FIRST GATE</text>
-    </g>
-
-    <g transform="translate(985 880) rotate(90)">
-      <text class="en" x="0" y="0" font-size="17"
-            textLength="230" lengthAdjust="spacingAndGlyphs">OBSERVE THREE</text>
-    </g>
-  </svg>`;
-}
-
-function applyPoster(root){
-  root=root||document;
-
-  root.querySelectorAll(".music-v7-unlock-mask").forEach(function(mask){
-    if(mask.dataset.lbCinemaPoster==="1") return;
-
-    var raw=(mask.textContent||"").replace(/\s+/g,"");
-    var target=
-      raw.indexOf("3種類")>=0 ||
-      raw.indexOf("3種")>=0 ||
-      (raw.indexOf("観測すると")>=0 && raw.indexOf("出現")>=0);
-
-    if(!target) return;
-
-    mask.dataset.lbCinemaPoster="1";
-    mask.classList.add("lb-cinema-poster-mask");
-    mask.setAttribute("aria-label","異なる3種類のカードを観測すると6曲解放");
-    mask.innerHTML=posterHTML();
-  });
-}
-
-function isProhibited(el){
-  var t=(el.textContent||"").toLowerCase();
-  return t.indexOf("prohibited")>=0 || t.indexOf("禁止")>=0;
-}
-
-function stage(list){
-  var w=list.querySelector(".music-prohibited-stage");
-  if(w) return w;
-  w=document.createElement("section");
-  w.className="music-prohibited-stage";
-  w.innerHTML='<div class="music-prohibited-stage-inner"><div>RESTRICTED OBSERVATION</div></div>';
-  list.appendChild(w);
-  return w;
-}
-
-function arrange(){
-  injectStyle();
-  scrubDefaultLabels();
-  applyPoster();
-
-  if(usingV7()){
-    removeLegacy();
-    return;
+      .pep-footer{
+        position:absolute;left:7.5%;right:7.5%;bottom:6.4%;
+        display:flex;justify-content:space-between;align-items:flex-end;gap:8px;
+        color:rgba(209,197,169,.58);
+        font-size:clamp(5px,1.9vw,8px);line-height:1.35;letter-spacing:.15em;font-weight:700;
+      }
+      .pep-barcode{
+        width:31%;height:16px;opacity:.62;
+        background:repeating-linear-gradient(
+          90deg,var(--paper) 0 1px,transparent 1px 3px,
+          var(--paper) 3px 5px,transparent 5px 7px,
+          var(--paper) 7px 8px,transparent 8px 11px
+        );
+      }
+      .pep-file{text-align:right}
+      .pep-file strong{
+        display:block;color:rgba(209,197,169,.76);
+        font-size:1.12em;letter-spacing:.23em;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
-  var list=document.getElementById("musicList");
-  if(!list) return;
+  function posterHTML() {
+    return '' +
+      '<div class="' + POSTER_CLASS + '" aria-hidden="true">' +
+        '<div class="pep-top">' +
+          '<div>ISOLATION ARCHIVE<small>MUSIC / RESTRICTED MATERIAL</small></div>' +
+          '<div class="pep-level">LEVEL<b>7</b></div>' +
+        '</div>' +
+        '<div class="pep-side pep-side-left">RESTRICTED</div>' +
+        '<div class="pep-side pep-side-right">DO NOT OPEN</div>' +
+        '<div class="pep-kicker">隔離アルバム</div>' +
+        '<div class="pep-main">押収品</div>' +
+        '<div class="pep-archive">EVIDENCE ARCHIVE</div>' +
+        '<div class="pep-ban">閲覧禁止<small>AUTHORIZED ACCESS ONLY</small></div>' +
+        '<div class="pep-lookback">LOOK BACK.</div>' +
+        '<div class="pep-stamp">QUARANTINE</div>' +
+        '<div class="pep-footer">' +
+          '<div class="pep-barcode"></div>' +
+          '<div class="pep-file"><strong>CASE FILE 0001</strong>SEALED / CONFISCATED</div>' +
+        '</div>' +
+      '</div>';
+  }
 
-  var cards=[].slice.call(
-    list.querySelectorAll(".music-v7-album-art[data-album],.music-v7-single-card[data-album]")
-  );
-  var target=cards.find(isProhibited);
-  if(!target) return;
+  function getTitle(card) {
+    var copy = card.querySelector(".music-v7-album-copy strong");
+    return (copy ? copy.textContent : card.textContent || "").trim().toLowerCase();
+  }
 
-  var inner=stage(list).querySelector(".music-prohibited-stage-inner");
-  if(target.parentNode!==inner) inner.appendChild(target);
-}
+  function isTarget(card) {
+    var title = getTitle(card);
+    return title.indexOf("poem:prohibited") >= 0 ||
+           title.indexOf("poem prohibited") >= 0 ||
+           title.indexOf("禁止") >= 0;
+  }
 
-function boot(){
-  injectStyle();
-  arrange();
+  function decorate(card) {
+    if (!card || !isTarget(card)) return;
 
-  var list=document.getElementById("musicList");
-  if(!list) return;
+    var locked = card.classList.contains("locked") ||
+                 card.getAttribute("data-locked") === "1";
 
-  var observer=new MutationObserver(function(){
-    clearTimeout(window.__musicProhibitedStageTimer);
-    window.__musicProhibitedStageTimer=setTimeout(arrange,40);
-  });
-  observer.observe(list,{childList:true,subtree:true,characterData:true});
-}
+    card.classList.toggle("prohibited-hybrid-card", locked);
 
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",boot);
-}else{
-  boot();
-}
+    var jacket = card.querySelector(".music-v7-jacket");
+    if (!jacket) return;
+
+    var existing = jacket.querySelector("." + POSTER_CLASS);
+
+    if (!locked) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    if (!existing) jacket.insertAdjacentHTML("beforeend", posterHTML());
+
+    var mask = jacket.querySelector(".music-v7-unlock-mask");
+    if (mask) mask.setAttribute("aria-hidden", "true");
+  }
+
+  function apply() {
+    injectStyle();
+    document.querySelectorAll(
+      ".music-v7-restricted-grid .music-v7-album-art[data-album]," +
+      ".music-v7-album-art.music-v7-restricted-album[data-album]"
+    ).forEach(decorate);
+  }
+
+  function schedule() {
+    clearTimeout(TIMER);
+    TIMER = setTimeout(apply, 40);
+  }
+
+  function boot() {
+    injectStyle();
+    apply();
+
+    var root = document.getElementById("musicView") ||
+               document.getElementById("musicList") ||
+               document.body;
+
+    new MutationObserver(schedule).observe(root, {
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:["class","data-locked"]
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot, {once:true});
+  } else {
+    boot();
+  }
 })();
