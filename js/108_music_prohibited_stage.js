@@ -1,9 +1,6 @@
-/* 108_music_prohibited_stage_typography_poster.js
-   LOOKING BEAR 初回ロック専用タイポグラフィ・ポスター
-   - 「3種類観測すると出現」のロックだけをポスター化
-   - 3種類のカードで6曲解放、という情報を大小の文字として散りばめる
-   - 「観測すると」は1行のまま90度回転
-   - タップ時の既存ヒント表示・解除判定には触れない
+/* 108_music_prohibited_stage_designer_poster.js
+   LOOKING BEAR 初回ロック専用・手組みタイポグラフィポスター
+   対象: 「3種類 観測すると 出現」の最初のロックだけ
 */
 (function(){
 "use strict";
@@ -13,8 +10,8 @@ function usingV7(){
 }
 
 function removeLegacy(){
-  var oldStage=document.querySelector(".music-prohibited-stage");
-  if(oldStage) oldStage.remove();
+  var old=document.querySelector(".music-prohibited-stage");
+  if(old) old.remove();
 }
 
 function injectStyle(){
@@ -35,175 +32,205 @@ function injectStyle(){
       width:min(250px,72vw);
       text-align:center
     }
+    .music-v7-unlock-mask b:empty{display:none!important}
 
-    .music-v7-unlock-mask b:empty{
-      display:none!important
-    }
-
-    /* 初回ロック・ポスター */
-    .music-v7-unlock-mask.lb-type-poster-mask{
-      container-type:inline-size;
-      display:block!important;
+    /* ===== LOOKING BEAR / FIRST GATE POSTER ===== */
+    .music-v7-unlock-mask.lb-designer-poster-mask{
+      position:absolute!important;
       inset:0!important;
+      display:block!important;
       padding:0!important;
       overflow:hidden!important;
       border-radius:inherit!important;
       background:
-        linear-gradient(90deg,rgba(0,0,0,.20),rgba(0,0,0,.02) 42%,rgba(0,0,0,.23)),
-        linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.42))!important;
-      color:#efe6b5!important;
-      text-align:left!important;
+        linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.36)),
+        linear-gradient(90deg,rgba(0,0,0,.16),transparent 38%,rgba(0,0,0,.12))!important;
+      color:#efe5b3!important;
       pointer-events:none!important;
+      container-type:inline-size;
     }
 
-    .lb-type-poster{
+    .lb-designer-poster{
       position:absolute;
-      inset:-1px;
+      inset:0;
       overflow:hidden;
+      color:#efe5b3;
       font-family:
-        "Arial Black","Helvetica Neue",
-        "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+        "Arial Black",
+        "Helvetica Neue",
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        sans-serif;
       font-weight:950;
-      line-height:.86;
-      letter-spacing:-.06em;
-      color:#efe6b5;
-      text-shadow:0 1px 2px rgba(0,0,0,.55);
+      line-height:.9;
+      letter-spacing:-.075em;
+      text-shadow:
+        0 .45cqw .8cqw rgba(0,0,0,.58),
+        0 0 .35cqw rgba(0,0,0,.45);
       isolation:isolate;
     }
 
-    .lb-type-poster .t{
+    .lb-designer-poster .p{
       position:absolute;
-      display:block;
       margin:0;
       padding:0;
       white-space:nowrap;
       transform-origin:center;
-      mix-blend-mode:normal;
     }
 
-    /* 主役 */
-    .lb-type-poster .n3{
-      left:-3cqw;
-      top:-7cqw;
-      font-size:43cqw;
-      line-height:.9;
-      letter-spacing:-.13em;
-      z-index:3;
-    }
-    .lb-type-poster .types{
-      left:33cqw;
-      top:4cqw;
-      font-size:21cqw;
-      z-index:4;
-    }
-    .lb-type-poster .observe{
-      right:-27cqw;
-      top:38cqw;
-      width:82cqw;
-      font-size:13.5cqw;
-      letter-spacing:-.11em;
-      transform:rotate(90deg);
+    /* 主役4要素 */
+    .lb-designer-poster .p-three{
+      left:-1.5cqw;
+      top:-2cqw;
+      font-size:39cqw;
+      line-height:.82;
       z-index:5;
     }
-    .lb-type-poster .appear{
+
+    .lb-designer-poster .p-kinds{
+      left:34cqw;
+      top:7cqw;
+      font-size:20cqw;
+      letter-spacing:-.11em;
+      z-index:5;
+    }
+
+    /* 一行を90度回転 */
+    .lb-designer-poster .p-observe{
+      right:-28cqw;
+      top:40cqw;
+      width:82cqw;
+      text-align:center;
+      font-size:12.8cqw;
+      letter-spacing:-.12em;
+      transform:rotate(90deg);
+      z-index:6;
+    }
+
+    .lb-designer-poster .p-appear{
       left:-2cqw;
-      bottom:-2cqw;
-      font-size:25cqw;
-      z-index:4;
+      bottom:-1.5cqw;
+      font-size:27cqw;
+      letter-spacing:-.12em;
+      z-index:5;
     }
 
-    /* 中サイズの情報 */
-    .lb-type-poster .six{
-      left:4cqw;
-      top:45cqw;
-      font-size:11cqw;
-      letter-spacing:-.04em;
-      z-index:4;
-    }
-    .lb-type-poster .collect{
+    /* 中央の情報ブロック。重ねず、余白に配置 */
+    .lb-designer-poster .p-six{
       left:5cqw;
-      top:57cqw;
-      font-size:8.7cqw;
-      z-index:4;
+      top:41cqw;
+      font-size:13cqw;
+      letter-spacing:-.05em;
+      z-index:5;
     }
-    .lb-type-poster .unlock{
-      left:29cqw;
-      top:66cqw;
-      font-size:10.5cqw;
-      transform:rotate(-2deg);
-      z-index:4;
+
+    .lb-designer-poster .p-unlock{
+      left:5cqw;
+      top:54cqw;
+      font-size:8.8cqw;
+      letter-spacing:-.07em;
+      z-index:5;
     }
-    .lb-type-poster .gate{
-      left:3cqw;
-      top:76cqw;
-      font-size:7.8cqw;
+
+    .lb-designer-poster .p-card{
+      left:5.5cqw;
+      top:65cqw;
+      font-size:5.2cqw;
+      letter-spacing:.02em;
       z-index:4;
     }
 
-    /* 小文字の密度 */
-    .lb-type-poster .micro{
-      font-family:"Helvetica Neue","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
-      font-weight:900;
-      line-height:1;
-      letter-spacing:-.03em;
-      opacity:.95;
+    .lb-designer-poster .p-first{
+      left:5.5cqw;
+      top:72cqw;
+      font-size:3.4cqw;
+      letter-spacing:.12em;
+      z-index:4;
+    }
+
+    /* 紙面の端に置く小さな情報 */
+    .lb-designer-poster .p-meta1{
+      left:38cqw;
+      top:30cqw;
+      font-size:3.15cqw;
+      letter-spacing:.04em;
+      z-index:4;
+    }
+
+    .lb-designer-poster .p-meta2{
+      left:38cqw;
+      top:34.5cqw;
+      font-size:3.15cqw;
+      letter-spacing:.02em;
+      z-index:4;
+    }
+
+    .lb-designer-poster .p-meta3{
+      left:39cqw;
+      top:77cqw;
+      font-size:3.15cqw;
+      letter-spacing:.01em;
+      z-index:4;
+    }
+
+    .lb-designer-poster .p-meta4{
+      left:39cqw;
+      top:81.5cqw;
+      font-size:3.15cqw;
+      letter-spacing:.04em;
+      z-index:4;
+    }
+
+    .lb-designer-poster .p-side{
+      left:-18cqw;
+      top:57cqw;
+      width:60cqw;
+      text-align:center;
+      font-size:3cqw;
+      letter-spacing:.12em;
+      transform:rotate(-90deg);
+      z-index:3;
+    }
+
+    /* 罫線 */
+    .lb-designer-poster .rule-a,
+    .lb-designer-poster .rule-b{
+      position:absolute;
+      display:block;
+      background:currentColor;
+      opacity:.85;
       z-index:2;
     }
-    .lb-type-poster .m1{left:39cqw;top:29cqw;font-size:4.5cqw}
-    .lb-type-poster .m2{left:4cqw;top:38cqw;font-size:3.5cqw}
-    .lb-type-poster .m3{left:5cqw;top:68cqw;font-size:3.8cqw}
-    .lb-type-poster .m4{left:43cqw;top:78cqw;font-size:3.5cqw}
-    .lb-type-poster .m5{left:4cqw;top:87cqw;font-size:4.4cqw}
-    .lb-type-poster .m6{right:3cqw;top:20cqw;font-size:3.1cqw}
-    .lb-type-poster .m7{left:43cqw;top:34cqw;font-size:3cqw}
-    .lb-type-poster .m8{left:4cqw;top:93cqw;font-size:3.1cqw}
-    .lb-type-poster .m9{right:5cqw;bottom:23cqw;font-size:3.2cqw}
-    .lb-type-poster .m10{left:44cqw;bottom:7cqw;font-size:3.2cqw}
-    .lb-type-poster .m11{
-      left:-9cqw;
-      top:48cqw;
-      font-size:3.2cqw;
-      transform:rotate(-90deg);
-    }
-    .lb-type-poster .m12{
-      right:-12cqw;
-      bottom:11cqw;
-      font-size:3.2cqw;
-      transform:rotate(90deg);
-    }
 
-    /* 細い罫線で紙面感を追加 */
-    .lb-type-poster:before,
-    .lb-type-poster:after{
-      content:"";
-      position:absolute;
-      background:currentColor;
-      opacity:.75;
-      z-index:1;
-    }
-    .lb-type-poster:before{
-      left:4cqw;
-      right:5cqw;
-      top:43cqw;
+    .lb-designer-poster .rule-a{
+      left:5cqw;
+      top:38.5cqw;
+      width:43cqw;
       height:.65cqw;
     }
-    .lb-type-poster:after{
-      left:37cqw;
-      top:28cqw;
-      bottom:4cqw;
+
+    .lb-designer-poster .rule-b{
+      left:36cqw;
+      top:29cqw;
       width:.55cqw;
+      height:57cqw;
     }
 
+    /* 画像が小さい環境向け */
     @supports not (font-size:1cqw){
-      .lb-type-poster .n3{font-size:128px}
-      .lb-type-poster .types{font-size:62px}
-      .lb-type-poster .observe{font-size:40px}
-      .lb-type-poster .appear{font-size:74px}
-      .lb-type-poster .six{font-size:33px}
-      .lb-type-poster .collect{font-size:26px}
-      .lb-type-poster .unlock{font-size:31px}
-      .lb-type-poster .gate{font-size:23px}
-      .lb-type-poster .micro{font-size:11px}
+      .lb-designer-poster .p-three{font-size:120px}
+      .lb-designer-poster .p-kinds{font-size:62px}
+      .lb-designer-poster .p-observe{font-size:40px}
+      .lb-designer-poster .p-appear{font-size:82px}
+      .lb-designer-poster .p-six{font-size:40px}
+      .lb-designer-poster .p-unlock{font-size:27px}
+      .lb-designer-poster .p-card{font-size:16px}
+      .lb-designer-poster .p-first,
+      .lb-designer-poster .p-meta1,
+      .lb-designer-poster .p-meta2,
+      .lb-designer-poster .p-meta3,
+      .lb-designer-poster .p-meta4,
+      .lb-designer-poster .p-side{font-size:10px}
     }
   `;
   document.head.appendChild(s);
@@ -225,47 +252,45 @@ function scrubDefaultLabels(root){
 
 function posterHTML(){
   return `
-    <div class="lb-type-poster" aria-hidden="true">
-      <span class="t n3">3</span>
-      <span class="t types">種類</span>
-      <span class="t observe">観測すると</span>
-      <span class="t six">6曲</span>
-      <span class="t collect">カードを集める</span>
-      <span class="t unlock">解放</span>
-      <span class="t gate">FIRST GATE</span>
-      <span class="t appear">出現</span>
+    <div class="lb-designer-poster" aria-hidden="true">
+      <span class="rule-a"></span>
+      <span class="rule-b"></span>
 
-      <span class="t micro m1">03 CARDS / 06 TRACKS</span>
-      <span class="t micro m2">LOOKING BEAR LAND</span>
-      <span class="t micro m3">OBSERVATION REQUIRED</span>
-      <span class="t micro m4">TRACK 01—06</span>
-      <span class="t micro m5">収集条件　異なるカード三種</span>
-      <span class="t micro m6">ENTRY CONDITION</span>
-      <span class="t micro m7">BUG ARCHIVE / COLLECT</span>
-      <span class="t micro m8">THE LAND OPENS AFTER OBSERVATION</span>
-      <span class="t micro m9">RESTRICTED OBSERVATION</span>
-      <span class="t micro m10">未観測　入口封鎖中</span>
-      <span class="t micro m11">THE LOOKING BEAR LAND</span>
-      <span class="t micro m12">CARD 03 / UNLOCK 06</span>
+      <span class="p p-three">3</span>
+      <span class="p p-kinds">種類</span>
+      <span class="p p-observe">観測すると</span>
+      <span class="p p-appear">出現</span>
+
+      <span class="p p-six">6曲</span>
+      <span class="p p-unlock">解放</span>
+      <span class="p p-card">CARD COLLECT</span>
+      <span class="p p-first">FIRST OBSERVATION GATE</span>
+
+      <span class="p p-meta1">03 DIFFERENT CARDS</span>
+      <span class="p p-meta2">TRACK 01—06 OPEN</span>
+      <span class="p p-meta3">LOOKING BEAR LAND</span>
+      <span class="p p-meta4">OBSERVATION REQUIRED</span>
+      <span class="p p-side">ENTRY CONDITION / CARD 03</span>
     </div>
   `;
 }
 
 function applyPoster(root){
   root=root||document;
+
   root.querySelectorAll(".music-v7-unlock-mask").forEach(function(mask){
-    if(mask.dataset.lbTypePoster==="1") return;
+    if(mask.dataset.lbDesignerPoster==="1") return;
 
     var raw=(mask.textContent||"").replace(/\s+/g,"");
-    var isFirstGate=
+    var target=
       raw.indexOf("3種類")>=0 ||
       raw.indexOf("3種")>=0 ||
       (raw.indexOf("観測すると")>=0 && raw.indexOf("出現")>=0);
 
-    if(!isFirstGate) return;
+    if(!target) return;
 
-    mask.dataset.lbTypePoster="1";
-    mask.classList.add("lb-type-poster-mask");
+    mask.dataset.lbDesignerPoster="1";
+    mask.classList.add("lb-designer-poster-mask");
     mask.setAttribute("aria-label","3種類のカードを観測すると6曲解放");
     mask.innerHTML=posterHTML();
   });
