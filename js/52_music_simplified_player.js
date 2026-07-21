@@ -247,7 +247,7 @@
         unlocked:false,
         locked:true,
         hidden:a.unlock.mode === "hidden",
-        label:a.unlock.label || "🔒 未観測",
+        label:(a.unlock.label==null?"":a.unlock.label),
         hint:a.unlock.hint || "観測条件を満たすと出現",
         progressText:(a.unlock.progressLabel || "観測") + " 0/" + (a.unlock.need || "?")
       };
@@ -263,7 +263,7 @@
   function musicUnlockOverlay(a){
     var st = musicUnlockState(a);
     if(!st || (!st.locked && st.unlocked !== false)) return "";
-    var label = st.label || a.lockLabel || "🔒";
+    var label = (st.label==null?"":st.label) || a.lockLabel || "";
     var hint = st.hint || a.lockHint || "";
     var prog = st.progressText || "";
     return '<div class="music-v7-unlock-mask"><b>'+esc(label)+'</b><span>'+esc(hint)+'</span><em>'+esc(prog)+'</em></div>';
