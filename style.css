@@ -8806,3 +8806,42 @@ footer.controls > button,
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+/* v150: notice modal layer safety */
+#noticeModalBg {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  display: grid !important;
+  place-items: center !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+  touch-action: none !important;
+}
+
+#noticeModalCard {
+  position: relative !important;
+  z-index: 2147483001 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+/* While the notice is open, block every interactive layer behind it. */
+body.notice-open #app,
+body.notice-open #musicView,
+body.notice-open #favoriteLayer,
+body.notice-open .favorite-layer,
+body.notice-open .dictionary-toolbar,
+body.notice-open .bottom-nav,
+body.notice-open .music-toolbar,
+body.notice-open #favoriteToggle,
+body.notice-open #userWordSearchBtn,
+body.notice-open #userWordAddBtn,
+body.notice-open button:not(#noticeModalBg button) {
+  pointer-events: none !important;
+}
+
+/* Keep the notice itself fully interactive. */
+body.notice-open #noticeModalBg,
+body.notice-open #noticeModalBg * {
+  pointer-events: auto !important;
+}
