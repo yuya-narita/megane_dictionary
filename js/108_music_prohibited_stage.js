@@ -1,8 +1,8 @@
-/* 108_music_prohibited_stage_v6.js
+/* 108_music_prohibited_stage_v4.js
    - V7の隔離棚を優先
    - 旧ステージを自動削除
    - 「👁 未観測」「🔒 未観測」だけを非表示
-   - 巨大ヒントをあえて少しはみ出させ、行間から表紙を覗かせる
+   - ヒント文（例：3種類観測すると出現）は残す
 */
 (function(){
 "use strict";
@@ -45,41 +45,13 @@ function injectStyle(){
     ".music-prohibited-stage{grid-column:1/-1;width:100%;display:flex;justify-content:center;padding:34px 18px 90px}" +
     ".music-prohibited-stage-inner{width:min(250px,72vw);text-align:center}" +
     ".music-v7-restricted-grid .music-v7-unlock-mask b:empty," +
-    ".music-v7-restricted-album .music-v7-unlock-mask b:empty{display:none!important}" +
-    ".music-v7-restricted-grid .music-v7-unlock-mask," +
-    ".music-v7-restricted-album .music-v7-unlock-mask{" +
-      "padding:2% 1%!important;" +
-      "display:flex!important;" +
-      "align-items:center!important;" +
-      "justify-content:center!important;" +
-      "overflow:visible!important;" +
-      "white-space:pre-line!important;" +
-      "word-break:keep-all!important;" +
-      "overflow-wrap:normal!important;" +
-      "line-break:strict!important;" +
-      "line-height:1.02!important;" +
-      "letter-spacing:-.045em!important;" +
-    "}" +
-    ".music-v7-restricted-grid .music-v7-unlock-mask>*:not(b)," +
-    ".music-v7-restricted-album .music-v7-unlock-mask>*:not(b){" +
-      "white-space:pre-line!important;" +
-      "word-break:keep-all!important;" +
-      "overflow-wrap:normal!important;" +
-      "line-break:strict!important;" +
-      "text-align:left!important;" +
-      "line-height:1.02!important;" +
-      "letter-spacing:-.045em!important;" +
-      "max-width:none!important;" +"width:112%!important;" +"transform:translateX(-4%)!important;" +
-      "margin:0!important;" +
-      "padding:0!important;" +
-    "}" +
-    "@media(max-width:430px){" +
-      ".music-v7-restricted-grid .music-v7-unlock-mask," +
-      ".music-v7-restricted-album .music-v7-unlock-mask{" +
-        "padding:1.5% 0!important;" +
-      "}" +
-    "}";
+    ".music-v7-restricted-album .music-v7-unlock-mask b:empty{display:none!important}";
   document.head.appendChild(s);
+
+var s2=document.createElement("style");
+s2.textContent=".lb-poster{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:visible}.lb-top{position:absolute;top:4%;left:12%;font-size:clamp(32px,7vw,56px);font-weight:900}.lb-bottom{position:absolute;right:10%;bottom:5%;font-size:clamp(34px,8vw,62px);font-weight:900}.lb-vertical{font-size:clamp(56px,13vw,110px);font-weight:900;line-height:.82;letter-spacing:-.06em;text-align:center}";
+document.head.appendChild(s2);
+
 }
 
 function isProhibited(el){
@@ -120,6 +92,23 @@ function arrange(){
   if(target.parentNode!==inner) inner.appendChild(target);
 }
 
+
+function stylizeVerticalHints(root){
+  root=(root||document);
+  var masks=root.querySelectorAll(".music-v7-unlock-mask");
+  masks.forEach(function(mask){
+    var els=[].slice.call(mask.children).filter(function(n){
+      return n.tagName!=="B" && (n.textContent||"").trim();
+    });
+    els.forEach(function(el){
+      var t=(el.textContent||"").trim();
+      if(t.indexOf("観測すると")>=0){
+        el.innerHTML='<div class="lb-poster"><div class="lb-top">3種類</div><div class="lb-vertical">観<br>測<br>す<br>る<br>と</div><div class="lb-bottom">出現</div></div>';
+      }
+    });
+  });
+}
+
 function boot(){
   injectStyle();
 
@@ -132,7 +121,9 @@ function boot(){
   });
 
   observer.observe(list,{childList:true,subtree:true,characterData:true});
+  stylizeVerticalHints();
   arrange();
+  stylizeVerticalHints();
 }
 
 if(document.readyState==="loading"){
