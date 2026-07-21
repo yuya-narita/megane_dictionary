@@ -391,7 +391,7 @@ const musicPlaylists = [
       "need": 3,
       "mode": "ghost",
       "label": "👁 未観測",
-      "hint": "カードを3種類観測すると出現",
+      "hint": "3種類観測すると出現",
       "progressLabel": "カード観測",
       "unlockedMessage": "The Looking Bear Land が観測されました。"
     },
