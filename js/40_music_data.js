@@ -45,6 +45,7 @@ const musicPlaylists = [
         "id": "poem_05",
         "title": "アドレナリン ― 世界が跳ねる薬 ―",
         "audio": "music/poem/poem_05 アドレナリン ― 世界が跳ねる薬 ―.mp3",
+        "video": "music/video/adrenaline.mp4",
         "tag": "詩の処方箋",
         "lyrics": "光が、速い\n世界が、焦る\n\n僕の中の　獣が\n呼吸よりも早く、跳ねている\n\nこわくても　止まれない\n走るたび　意味が燃える\n\nアドレナリン\n命が　動詞になる瞬間\n\n叫ぶように　生きて\n震えるように　確かめる\n\nこの跳ねが　終わる前に\n世界の輪郭を　見ていたい\n\n\n",
         "cover": "images/music/poem_05.jpg"
