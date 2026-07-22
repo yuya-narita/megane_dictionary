@@ -146,11 +146,18 @@
     bindMusicMediaActionsV8();
 
     document.addEventListener("visibilitychange", function(){
-      updateMediaSessionV8();
+      var a = audio();
+
+      // Musicが実際に再生対象の時だけMediaSessionを更新する。
+      // Conference再生中に外部検索へ移動した際、停止中のMusicが
+      // iOSプレイヤーのメタデータと操作権を奪うのを防ぐ。
+      if(a && !a.paused && !a.ended){
+        updateMediaSessionV8();
+      }
+
       // 他アプリで一時停止されたあと、戻ってきた時に一度だけ復帰を試す。
       // iOSが拒否した場合は通常の再生ボタン/ロック画面ボタンで再開する。
       if(!document.hidden && state.playing){
-        var a = audio();
         if(a && a.paused){
           var p = a.play(); if(p && p.catch) p.catch(function(){});
         }
@@ -158,7 +165,10 @@
     });
 
     window.addEventListener("focus", function(){
-      updateMediaSessionV8();
+      var a = audio();
+      if(a && !a.paused && !a.ended){
+        updateMediaSessionV8();
+      }
     });
   }
 
