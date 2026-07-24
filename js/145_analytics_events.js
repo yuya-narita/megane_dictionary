@@ -46,12 +46,6 @@
     document.addEventListener("click", (event) => {
       const target = event.target;
 
-      // Favorite action. No word, character, or definition text is sent.
-      if (closest(target, "#favoriteToggle")) {
-        track("favorite", { source: "dictionary" });
-        return;
-      }
-
       // Share entry points and the final share actions in both preview dialogs.
       if (closest(target, "#shareCurrent, .self-share-preview-share, .char-share-preview-share")) {
         let source = "dictionary";
@@ -67,10 +61,6 @@
         return;
       }
 
-      // Opening the user's own definition/card view.
-      if (closest(target, "#selfGlassToggleButton")) {
-        track("user_definition_open", { source: "self_glass_button" });
-      }
     }, true);
   }
 

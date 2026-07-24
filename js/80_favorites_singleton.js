@@ -228,6 +228,16 @@
     }
     save(list);
 
+    // 保存・解除が完了した時点を計測。定義本文やユーザー名は送らない。
+    try {
+      if (typeof window.meganeTrack === "function") {
+        window.meganeTrack(wasOn ? "favorite_remove" : "favorite_add", {
+          word: String(item.word || item.title || ""),
+          glass: item.type === "selfdict" ? "自分メガネ" : String(item.glassName || item.glassId || "")
+        });
+      }
+    } catch (_) {}
+
     // モーダルが開いている時だけ再描画。普段は星だけ更新してチラつきを避ける。
     const d=q("favoriteDialog");
     if(d && d.open) renderList();
